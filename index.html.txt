@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Roteiro.IA - Oficial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+        
+        :root {
+            --primary: #10b981;
+            --accent: #fbbf24;
+            --bg-deep: #000000;
+            --bg-card: #0a0a0a;
+            --border: #1a1a1a;
+            --text-main: #ffffff;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            margin: 0; padding: 0; height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .char { display: inline-block; opacity: 0; transform: translateY(-100px); filter: blur(10px); animation: charFall 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes charFall { 0% { opacity: 0; transform: translateY(-100px); filter: blur(10px); } 60% { opacity: 1; filter: blur(0px); transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0px); } }
+
+        .splash-screen { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; transition: opacity 0.6s ease-out; }
+
+        .input-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(25px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+        .day-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 16px 20px; gap: 12px; background: var(--bg-deep); border-bottom: 1px solid var(--border); z-index: 100; }
+        .day-carousel::-webkit-scrollbar { display: none; }
+
+        .day-bubble { flex: 0 0 auto; width: 64px; height: 64px; border-radius: 20px; background: var(--bg-card); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid var(--border); color: #404040; cursor: pointer; }
+        .day-bubble.active { background: var(--accent); color: black; border-color: var(--accent); box-shadow: 0 10px 20px -5px rgba(251, 191, 36, 0.3); transform: scale(1.08); }
+
+        .main-container { flex: 1; position: relative; overflow: hidden; }
+
+        .view-section { position: absolute; inset: 0; overflow-y: auto; padding: 20px; padding-bottom: 110px; transition: all 0.4s ease; }
+
+        #map { height: 100%; width: 100%; z-index: 1; filter: grayscale(1) invert(1) contrast(1.2); }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px); height: 80px; display: flex; border-top: 1px solid var(--border); z-index: 150; }
+        .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #525252; font-size: 0.75rem; font-weight: 800; }
+        .nav-btn.active { color: var(--accent); }
+
+        .hide { transform: translateY(30px); opacity: 0; pointer-events: none; }
+        .show { transform: translateY(0); opacity: 1; }
+
+        .premium-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; }
+
+        .choice-btn { background: #000; border: 2px solid var(--border); padding: 12px 4px; border-radius: 14px; text-align: center; font-size: 0.65rem; font-weight: 800; color: #525252; text-transform: uppercase; }
+        .choice-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+        .acc-btn { background: #000; border: 2px solid var(--border); padding: 14px; border-radius: 14px; font-size: 0.75rem; font-weight: 700; color: #525252; display: flex; align-items: center; gap: 8px; }
+        .acc-btn.active { background: rgba(16, 185, 129, 0.1); color: var(--primary); border-color: var(--primary); }
+
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--accent); border-radius: 50%; width: 28px; height: 28px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .edit-fab { position: fixed; top: 20px; right: 20px; z-index: 500; background: var(--bg-card); padding: 12px 18px; border-radius: 16px; border: 2px solid var(--accent); display: flex; align-items: center; gap: 10px; font-size: 0.7rem; font-weight: 800; color: var(--accent); }
+
+        .total-trip-card { background: linear-gradient(135deg, #0a0a0a, #000); border: 1px solid var(--primary); border-radius: 28px; padding: 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
+        .map-info-overlay { position: absolute; top: 20px; right: 20px; z-index: 1000; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); padding: 16px; border-radius: 20px; border: 1px solid var(--border); max-width: 200px; }
+
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(0.8); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="splash" class="splash-screen">
+        <div id="animated-logo" class="text-5xl font-black text-white italic"></div>
+        <div class="loader mt-12"></div>
+        <p class="text-neutral-500 mt-4 font-bold text-xs tracking-widest uppercase">Sincronizando...</p>
+    </div>
+
+    <div id="input-screen" class="input-overlay">
+        <div class="bg-neutral-950 w-full max-w-lg rounded-[36px] p-8 border border-neutral-900 shadow-2xl overflow-y-auto max-h-[95vh]">
+            <div class="relative flex flex-col items-center justify-center mb-10 text-center">
+                <div class="text-4xl font-black text-white italic">Roteiro<span class="text-amber-400">.IA</span></div>
+                <p class="text-[10px] text-emerald-500 font-bold uppercase mt-2 tracking-[0.2em]">Viagens Inteligentes</p>
+                <button onclick="closeEditor()" id="close-editor-btn" class="hidden absolute right-0 top-0 text-neutral-500 p-2"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-amber-400 mb-2 block tracking-widest">Origem</label>
+                    <input type="text" id="user-origin" class="w-full bg-black border-2 border-neutral-900 rounded-2xl py-4 px-5 text-white mb-4 focus:border-amber-400 outline-none" placeholder="Ex: Lisboa, Portugal">
+
+                    <label class="text-[10px] font-black uppercase text-amber-400 mb-2 block tracking-widest">Destino</label>
+                    <input type="text" id="user-destination" class="w-full bg-black border-2 border-neutral-900 rounded-2xl py-4 px-5 text-white mb-4 focus:border-amber-400 outline-none" placeholder="Para onde quer ir?">
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label class="text-[9px] font-black uppercase text-neutral-500 mb-1 block tracking-widest">Ida</label>
+                            <input type="date" id="trip-start" class="w-full bg-black border-2 border-neutral-900 rounded-2xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-black uppercase text-neutral-500 mb-1 block tracking-widest">Volta</label>
+                            <input type="date" id="trip-end" class="w-full bg-black border-2 border-neutral-900 rounded-2xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none">
+                        </div>
+                    </div>
+
+                    <label class="text-[10px] font-black uppercase text-neutral-500 mb-2 block tracking-widest">Preferências (Opcional)</label>
+                    <textarea id="user-query" class="w-full bg-black border-2 border-neutral-900 rounded-2xl p-5 text-white h-24 focus:border-amber-400 outline-none" placeholder="Coloque aqui os pontos turísticos que você quer visitar ou o seu estilo de viagem..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-neutral-500 mb-2 block tracking-widest">Orçamento</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setTier('económico')" id="t-eco" class="choice-btn">Económico</button>
+                            <button onclick="setTier('standard')" id="t-std" class="choice-btn active">Standard</button>
+                            <button onclick="setTier('premium')" id="t-pre" class="choice-btn">Premium</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="generateItinerary()" id="gen-btn" class="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl mt-4 text-lg uppercase tracking-widest hover:bg-amber-400 transition-colors">Gerar Roteiro</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="edit-button" class="edit-fab hidden" onclick="openEditor()"><i data-lucide="settings-2"></i> AJUSTAR</button>
+    <div class="day-carousel hidden" id="day-selector"></div>
+
+    <div class="main-container">
+        <section id="itinerary-view" class="view-section hide">
+            <div id="grand-total-section" class="total-trip-card hidden">
+                <div class="flex items-center gap-4">
+                    <div class="bg-emerald-500/10 p-3 rounded-2xl border border-emerald-500/20"><i data-lucide="wallet" class="text-emerald-500"></i></div>
+                    <div>
+                        <p class="text-[10px] font-black text-emerald-500 uppercase">Custo Total Estimado</p>
+                        <h3 id="grand-total-val" class="text-2xl font-black text-white">---</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h2 id="day-title" class="text-4xl font-black text-white tracking-tighter leading-none">...</h2>
+                    <p id="day-subtitle" class="text-xs text-amber-400 font-extrabold uppercase mt-2 tracking-widest">...</p>
+                </div>
+                <div class="bg-neutral-950 px-4 py-3 rounded-2xl border border-neutral-900 text-amber-400 flex items-center gap-2">
+                    <span id="weather-val" class="text-lg font-black">--°</span>
+                </div>
+            </div>
+
+            <div class="space-y-6" id="itinerary-content">
+                <!-- Conteúdo carregado dinamicamente -->
+            </div>
+        </section>
+
+        <section id="map-view" class="view-section hide" style="padding: 0;">
+            <div id="map"></div>
+        </section>
+    </div>
+
+    <nav id="bottom-navigation" class="bottom-nav hidden">
+        <button onclick="switchView('itinerary')" id="nav-itinerary" class="nav-btn active"><i data-lucide="map"></i><span>Roteiro</span></button>
+        <button onclick="switchView('map')" id="nav-map" class="nav-btn"><i data-lucide="navigation-2"></i><span>Mapa</span></button>
+    </nav>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'roteiro-ia-v1';
+        const apiKey = ""; 
+
+        window.itineraryData = [];
+        let map = null, polyline = null;
+        let currentDayId = 1;
+        window.selectedTier = 'standard';
+
+        function startSplashAnimation() {
+            const logoContainer = document.getElementById('animated-logo');
+            const text = "Roteiro.IA";
+            logoContainer.innerHTML = '';
+            text.split('').forEach((char, i) => {
+                const span = document.createElement('span');
+                span.innerHTML = char;
+                span.className = 'char';
+                if (char === '.' || i > 6) span.classList.add('text-emerald-500');
+                span.style.animationDelay = `${i * 0.1}s`;
+                logoContainer.appendChild(span);
+            });
+        }
+        startSplashAnimation();
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const tripDoc = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'lastTrip'));
+                if (tripDoc.exists()) {
+                    window.itineraryData = JSON.parse(tripDoc.data().itinerary);
+                    showAppUI();
+                    loadDay(1);
+                }
+                setTimeout(() => {
+                    document.getElementById('splash').style.opacity = '0';
+                    setTimeout(() => document.getElementById('splash').style.display = 'none', 600);
+                }, 2000);
+            }
+        });
+
+        function showAppUI() {
+            document.getElementById('input-screen').style.display = 'none';
+            document.getElementById('day-selector').classList.remove('hidden');
+            document.getElementById('bottom-navigation').classList.remove('hidden');
+            document.getElementById('edit-button').classList.remove('hidden');
+            document.getElementById('itinerary-view').classList.replace('hide', 'show');
+            generateDayPicker();
+            if (!map) initMap();
+        }
+
+        function initMap() {
+            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([0,0], 2);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+        }
+
+        window.setTier = (t) => {
+            window.selectedTier = t;
+            document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(t === 'económico' ? 't-eco' : t === 'standard' ? 't-std' : 't-pre').classList.add('active');
+        };
+
+        window.generateItinerary = async () => {
+            const dest = document.getElementById('user-destination').value;
+            const start = document.getElementById('trip-start').value;
+            const end = document.getElementById('trip-end').value;
+            if (!dest || !start || !end) return;
+
+            const btn = document.getElementById('gen-btn');
+            btn.innerHTML = '<div class="loader mx-auto"></div>';
+            
+            const prompt = `Cria um roteiro de viagem para ${dest} de ${start} até ${end} com orçamento ${window.selectedTier}. Responde apenas com um JSON array no seguinte formato: [{"id":1,"title":"Dia 1","subtitle":"Cidade","weather":"22°C","hotel":{"name":"Hotel X","address":"Rua Y"},"total":"€100","timeline":[{"time":"09:00","desc":"Visita ao Museu","price":"€20"}],"coords":[[lat,lng]]}]`;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
+                });
+                const json = await res.json();
+                window.itineraryData = JSON.parse(json.candidates[0].content.parts[0].text);
+                
+                await setDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'settings', 'lastTrip'), { itinerary: JSON.stringify(window.itineraryData) });
+                showAppUI();
+                loadDay(1);
+            } catch (e) {
+                btn.innerText = "ERRO AO GERAR";
+            } finally {
+                btn.innerText = "Gerar Roteiro";
+            }
+        };
+
+        function generateDayPicker() {
+            const container = document.getElementById('day-selector');
+            container.innerHTML = '';
+            window.itineraryData.forEach(day => {
+                const div = document.createElement('div');
+                div.className = `day-bubble ${day.id === currentDayId ? 'active' : ''}`;
+                div.innerHTML = `<span class="text-2xl font-black">${day.id}</span>`;
+                div.onclick = () => loadDay(day.id);
+                container.appendChild(div);
+            });
+        }
+
+        function loadDay(id) {
+            currentDayId = id;
+            const data = window.itineraryData.find(d => d.id === id);
+            if (!data) return;
+            document.getElementById('day-title').innerText = data.title;
+            document.getElementById('day-subtitle').innerText = data.subtitle;
+            document.getElementById('weather-val').innerText = data.weather;
+            
+            const content = document.getElementById('itinerary-content');
+            content.innerHTML = `
+                <div class="premium-card border-l-4 border-l-amber-400">
+                    <span class="text-[10px] font-black text-neutral-500 uppercase block mb-1">Alojamento</span>
+                    <h4 class="text-xl font-extrabold text-white">${data.hotel.name}</h4>
+                    <p class="text-xs text-neutral-500">${data.hotel.address}</p>
+                </div>
+                <div class="premium-card">
+                    <span class="text-[10px] font-black text-neutral-500 uppercase block mb-6">Programação</span>
+                    <ul class="space-y-6 border-l-2 border-neutral-900 ml-2 pl-8 relative">
+                        ${data.timeline.map(item => `
+                            <li class="relative mb-4 flex justify-between">
+                                <div class="text-sm font-bold text-neutral-200">${item.time} - ${item.desc}</div>
+                                <div class="text-[10px] font-black text-emerald-500">${item.price}</div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        window.openEditor = () => document.getElementById('input-screen').style.display = 'flex';
+        window.closeEditor = () => document.getElementById('input-screen').style.display = 'none';
+        window.switchView = (v) => {
+            document.getElementById('itinerary-view').className = v === 'itinerary' ? 'view-section show' : 'view-section hide';
+            document.getElementById('map-view').className = v === 'map' ? 'view-section show' : 'view-section hide';
+            document.getElementById('nav-itinerary').className = v === 'itinerary' ? 'nav-btn active' : 'nav-btn';
+            document.getElementById('nav-map').className = v === 'map' ? 'nav-btn active' : 'nav-btn';
+            if (v === 'map') setTimeout(() => map.invalidateSize(), 100);
+        };
+    </script>
+</body>
+</html>
+
