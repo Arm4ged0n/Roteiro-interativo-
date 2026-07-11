@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>cronograma.ia - Planejador Inteligente</title>
+    <title>cronograma.ia - Planeador de Viagens Inteligente</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -30,7 +30,7 @@
             overflow: hidden;
         }
 
-        /* Container da Tela de Entrada Otimizada para Visibilidade Total */
+        /* Container do Ecrã de Entrada Otimizado */
         .input-overlay {
             position: fixed;
             inset: 0;
@@ -66,7 +66,7 @@
             color: white;
             outline: none;
             transition: all 0.2s;
-            font-size: 13.5px;
+            font-size: 13px;
         }
 
         .custom-input:focus { 
@@ -79,7 +79,7 @@
             font-weight: 500;
         }
 
-        .tier-selector {
+        .selector-row {
             display: flex;
             background: #020617;
             padding: 4px;
@@ -88,9 +88,9 @@
             gap: 4px;
         }
 
-        .tier-option {
+        .selector-option {
             flex: 1;
-            padding: 8px 2px;
+            padding: 10px 2px;
             text-align: center;
             font-size: 9px;
             font-weight: 800;
@@ -99,9 +99,13 @@
             cursor: pointer;
             transition: all 0.3s;
             color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
-        .tier-option.active {
+        .selector-option.active {
             background: white;
             color: black;
             box-shadow: 0 4px 10px rgba(255,255,255,0.05);
@@ -156,7 +160,7 @@
         #map { 
             height: 100%; 
             width: 100%; 
-            filter: grayscale(0.3) contrast(1.1); 
+            filter: grayscale(0.1) contrast(1.05); 
         }
 
         .bottom-nav {
@@ -193,22 +197,30 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Botão de Voltar Redesenhado com Destaque Premium */
         .back-btn {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border);
-            padding: 6px 12px;
-            border-radius: 10px;
-            color: #94a3b8;
-            font-size: 10.5px;
-            font-weight: 700;
+            background: #ffffff;
+            border: 1px solid #ffffff;
+            padding: 10px 18px;
+            border-radius: 14px;
+            color: #020617;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 12px;
-            transition: all 0.2s;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
         }
 
-        /* Tags para categorizar custos */
+        .back-btn:active {
+            transform: scale(0.97);
+            background: #e2e8f0;
+        }
+
         .cost-tag-free {
             background: rgba(16, 185, 129, 0.1);
             color: #10b981;
@@ -227,17 +239,30 @@
             font-size: 9px;
             font-weight: 800;
         }
+
+        .custom-message-box {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 3000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Splash Screen -->
-    <div id="splash" class="splash-screen fixed inset-0 bg-black flex flex-col items-center justify-center z-[3000] transition-opacity duration-500">
-        <div class="text-4xl font-black text-white tracking-tighter mb-4 italic">cronograma<span class="text-sky-500">.ia</span></div>
-        <div class="loader"></div>
-    </div>
+    <!-- Caixa de Mensagem de Erros Customizada -->
+    <div id="error-toast" class="custom-message-box"></div>
 
-    <!-- Tela de Entrada Compacta (Otimizada para Mobile e Campos sem Labels) -->
+    <!-- Ecrã de Entrada Compacta -->
     <div id="input-screen" class="input-overlay">
         <div class="config-card">
             <div class="flex items-center gap-3">
@@ -245,26 +270,41 @@
                     <i data-lucide="sparkles" class="text-sky-500 w-5.5 h-5.5"></i>
                 </div>
                 <div>
-                    <h2 class="text-xl font-extrabold text-white tracking-tight">Montar Cronograma</h2>
-                    <p class="text-slate-400 text-[11px] font-semibold">Organização inteligente com custos reais</p>
+                    <h2 class="text-xl font-extrabold text-white tracking-tight">Configurar Cronograma</h2>
+                    <p class="text-slate-400 text-[11px] font-semibold">Planeamento de rotas e custos inteligentes</p>
                 </div>
             </div>
             
             <div class="space-y-3.5">
-                <!-- Inputs sem labels fixas, apenas placeholders descritivos -->
-                <input type="text" id="user-origin" class="custom-input" placeholder="Seu Ponto de Partida (Ex: Porto Alegre, RS)">
+                <div class="input-group">
+                    <input type="text" id="user-origin" class="custom-input" placeholder="Seu Ponto de Partida (Ex: Porto Alegre, RS)">
+                </div>
 
-                <textarea id="user-query" class="custom-input h-28 resize-none" placeholder="Detalhes do plano: Para onde vai, quantos dias, quantas pessoas e locais obrigatórios... (Ex: Viagem de 3 dias para 2 pessoas em Curitiba, querendo visitar o Jardim Botânico e a Ópera de Arame)"></textarea>
+                <div class="input-group">
+                    <textarea id="user-query" class="custom-input h-24 resize-none" placeholder="Destinos e Detalhes Importantes (Ex: 26 dias na Argentina e Chile. 5 adultos e 2 crianças. Queremos trilhas, parques nacionais e passeios infantis)"></textarea>
+                </div>
 
-                <div class="tier-selector">
-                    <div id="tier-eco" onclick="setTier('econômico')" class="tier-option">💰 Econômico</div>
-                    <div id="tier-std" onclick="setTier('standard')" class="tier-option active">⚖️ Standard</div>
-                    <div id="tier-pre" onclick="setTier('premium')" class="tier-option">💎 Premium</div>
+                <!-- Escolha do Meio de Transporte -->
+                <div class="input-group">
+                    <div class="selector-row" id="transport-selector">
+                        <div id="trans-car" onclick="setTransport('car')" class="selector-option active">
+                            <i data-lucide="car" class="w-4 h-4"></i> Carro
+                        </div>
+                        <div id="trans-plane" onclick="setTransport('plane')" class="selector-option">
+                            <i data-lucide="plane" class="w-4 h-4"></i> Avião
+                        </div>
+                    </div>
+                </div>
+
+                <div class="selector-row" id="budget-selector">
+                    <div id="tier-eco" onclick="setTier('econômico')" class="selector-option">💰 Económico</div>
+                    <div id="tier-std" onclick="setTier('standard')" class="selector-option active">⚖️ Standard</div>
+                    <div id="tier-pre" onclick="setTier('premium')" class="selector-option">💎 Premium</div>
                 </div>
                 
-                <button onclick="generateItinerary()" id="gen-btn" class="w-full bg-white text-black font-black py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-sky-500 hover:text-white transition-all text-xs tracking-wider">
+                <button onclick="generateItinerary()" id="gen-btn" class="w-full bg-white text-black font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-500 hover:text-white transition-all text-xs tracking-wider">
                     <i data-lucide="calendar" class="w-4 h-4"></i>
-                    MONTAR CRONOGRAMA COMPLETO
+                    GERAR ROTEIRO COM DADOS REAIS
                 </button>
             </div>
         </div>
@@ -276,9 +316,11 @@
         <div class="flex-1 relative overflow-hidden">
             <!-- Detalhamento de Atividades -->
             <section id="itinerary-view" class="view-section">
-                <button onclick="backToMenu()" class="back-btn">
-                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> REAJUSTAR DADOS
+                <!-- Botão de Voltar Premium de Fácil Acesso -->
+                <button onclick="backToMenu()" class="back-btn w-full">
+                    <i data-lucide="arrow-left-right" class="w-4 h-4"></i> VOLTAR E EDITAR CONFIGURAÇÕES
                 </button>
+
                 <div class="flex justify-between items-start mb-6">
                     <div>
                         <h2 id="day-title" class="text-2xl font-black text-white leading-tight">...</h2>
@@ -369,10 +411,11 @@
     <script>
         const apiKey = ""; 
         let selectedTier = 'standard';
+        let transportMode = 'car'; // 'car' ou 'plane'
         let itineraryData = [];
         let map, markerGroup;
 
-        // Custom marcador de veículo lúdico para o percurso
+        // Custom marcador de veículo alegre
         const carIcon = L.divIcon({
             html: `
                 <div class="car-icon-container" style="background: white; padding: 5px; border-radius: 10px; border: 2px solid black; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
@@ -388,47 +431,59 @@
 
         window.onload = () => {
             lucide.createIcons();
-            setTimeout(() => {
-                const splash = document.getElementById('splash');
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 500);
-            }, 1200);
         };
+
+        function showMessage(text) {
+            const toast = document.getElementById('error-toast');
+            toast.innerText = text;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        }
 
         function setTier(tier) {
             selectedTier = tier;
-            document.querySelectorAll('.tier-option').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#budget-selector .selector-option').forEach(el => el.classList.remove('active'));
             const id = tier === 'econômico' ? 'eco' : (tier === 'standard' ? 'std' : 'pre');
             document.getElementById(`tier-${id}`).classList.add('active');
+        }
+
+        function setTransport(mode) {
+            transportMode = mode;
+            document.querySelectorAll('#transport-selector .selector-option').forEach(el => el.classList.remove('active'));
+            document.getElementById(`trans-${mode}`).classList.add('active');
         }
 
         async function generateItinerary() {
             const query = document.getElementById('user-query').value;
             const origin = document.getElementById('user-origin').value;
             const btn = document.getElementById('gen-btn');
-            if (!query) return;
+            if (!query) {
+                showMessage("Por favor, preencha o campo de visão de viagem.");
+                return;
+            }
 
             btn.disabled = true;
             btn.innerHTML = '<div class="loader"></div>';
 
-            const systemPrompt = `Você é um planejador e otimizador de cronogramas de viagens profissional.
-            Sua tarefa é analisar o ponto de partida do usuário, a quantidade de dias solicitados, o destino e as preferências e montar um cronograma detalhado de horas e ações.
+            const systemPrompt = `Você é um planejador de cronogramas profissionais.
+            Sua tarefa é analisar o ponto de partida, quantidade de dias, destino, preferências e o meio de transporte selecionado (Carro ou Avião) para criar um itinerário ideal.
             
-            DIRETRIZES DA RESPOSTA:
-            1. Você deve identificar o número de dias requisitado e gerar exatamente um objeto correspondente a cada dia de 1 a X.
-            2. Para cada atividade listada no campo "timeline", especifique detalhadamente se a atividade/parque é paga ou não, por exemplo: "14:00 - Jardim Botânico [Grátis]" ou "16:00 - Entrada no Museu [Pago - R$ 30,00]".
-            3. Use o Google Search para procurar opções de hotéis condizentes com o orçamento indicado pelo perfil de investimento do usuário (Econômico, Standard ou Premium) e seus valores exatos de diárias.
-            4. Retorne apenas uma array de objetos JSON válidos conforme o formato estruturado abaixo.
+            DIRETRIZES IMPORTANTES:
+            1. Identifique o número de dias solicitado no prompt e gere exatamente um objeto correspondente a cada dia de 1 a X.
+            2. Se o transporte for "carro", o planejamento do primeiro dia deve focar na saída por via terrestre e paradas nas estradas. Se for "avião", o Dia 1 deve começar com o deslocamento para o aeroporto mais próximo da origem, o vôo, o pouso no aeroporto de destino e o check-in no hotel.
+            3. No campo "timeline", defina o tipo de cada atividade ("pago" ou "gratis"), o preço e detalhes realistas.
+            4. Procure coordenadas geográficas REAIS correspondentes à rota física desenhada.
+            5. Retorne apenas uma array de objetos JSON válidos conforme o formato estruturado abaixo.
 
             Formato do JSON de Resposta:
             [{ 
                 "id": número, 
-                "title": "Dia X: Nome do Percurso", 
+                "title": "Dia X: Nome do Percurso Real", 
                 "subtitle": "Breve frase descritiva", 
                 "weather": "Temperatura", 
-                "hotel": {"name": "Nome Real do Hotel", "address": "Endereço Real", "price": "R$ Diária"}, 
+                "hotel": {"name": "Nome Real do Hotel no local", "address": "Endereço Real no local", "price": "R$ Diária"}, 
                 "timeline": [
-                    {"time": "08:00", "activity": "Visita ao Local", "type": "pago/gratis", "price": "R$ Valor ou Grátis", "details": "Descrição curta da ação do horário."}
+                    {"time": "08:00", "activity": "Atividade Real no Destino", "type": "pago/gratis", "price": "R$ Valor ou Grátis", "details": "Descrição realista baseada nas necessidades do usuário."}
                 ], 
                 "ticket": "R$ Total de entradas do dia", 
                 "meal": "R$ Total de alimentação do dia", 
@@ -438,12 +493,11 @@
             }]`;
 
             try {
-                // Not using web search directly as instructed but activating model parameters to let Gemini use it internally if key provided
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Roteiro completo: ${query}. Origem: ${origin}. Perfil de Orçamento: ${selectedTier.toUpperCase()}. Pesquise preços reais de hotéis e das atrações descritas.` }] }],
+                        contents: [{ parts: [{ text: `Roteiro completo: ${query}. Origem: ${origin}. Meio de transporte: ${transportMode === 'car' ? 'Carro' : 'Avião'}. Perfil de Orçamento: ${selectedTier.toUpperCase()}.` }] }],
                         systemInstruction: { parts: [{ text: systemPrompt }] },
                         generationConfig: { responseMimeType: "application/json" }
                     })
@@ -455,11 +509,11 @@
                 renderApp();
             } catch (e) {
                 console.warn("Utilizando Fallback Inteligente de Geração Local...", e);
-                itineraryData = mockData(query);
+                itineraryData = smartLocalGenerator(query, origin);
                 renderApp();
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="calendar" class="w-4 h-4"></i> MONTAR CRONOGRAMA COMPLETO';
+                btn.innerHTML = '<i data-lucide="calendar" class="w-4 h-4"></i> GERAR ROTEIRO COM DADOS REAIS';
                 lucide.createIcons();
             }
         }
@@ -519,46 +573,73 @@
         function initMap() {
             if (map) return;
             map = L.map('map', { zoomControl: false }).setView([0,0], 2);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+            // Usando camada clássica do OpenStreetMap com estradas claras e nítidas
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
             markerGroup = L.layerGroup().addTo(map);
         }
 
+        // Função de desenho de rotas utilizando chamadas ao serviço público do OSRM para seguir estradas reais
         function updateMap(coords) {
             if (!map || !coords || coords.length === 0) return;
             markerGroup.clearLayers();
-            const points = coords.map(c => L.latLng(c[0], c[1]));
 
-            // Traçado preto sólido via rua
+            if (coords.length < 2) {
+                // Desenha apenas o marcador se for um ponto isolado
+                const p = L.latLng(coords[0][0], coords[0][1]);
+                L.marker(p, { icon: carIcon }).addTo(markerGroup);
+                map.setView(p, 13);
+                return;
+            }
+
+            // OSRM aceita coordenadas no formato: longitude,latitude
+            const osrmCoords = coords.map(c => `${c[1]},${c[0]}`).join(';');
+            const url = `https://router.project-osrm.org/route/v1/driving/${osrmCoords}?overview=full&geometries=geojson`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.code === 'Ok' && data.routes && data.routes[0]) {
+                        // Converte o GeoJSON do OSRM (que vem em [lon, lat]) de volta para o Leaflet [lat, lon]
+                        const pathCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                        drawRouteOnMap(pathCoords);
+                    } else {
+                        // Fallback em linha reta caso o OSRM falhe
+                        drawRouteOnMap(coords);
+                    }
+                })
+                .catch(() => {
+                    // Fallback estruturado
+                    drawRouteOnMap(coords);
+                });
+        }
+
+        function drawRouteOnMap(pointsList) {
+            const points = pointsList.map(c => L.latLng(c[0], c[1]));
+
+            // Traçado preto tracejado via estradas (Estilo Google Maps)
             const poly = L.polyline(points, { 
-                color: '#000000', 
-                weight: 5, 
+                color: '#1e293b', 
+                weight: 6, 
                 opacity: 0.9, 
-                lineJoin: 'round' 
+                lineJoin: 'round',
+                dashArray: '8, 8' 
             }).addTo(markerGroup);
 
-            // Contorno branco para maior legibilidade
+            // Contorno branco por baixo para contraste absoluto no mapa
             L.polyline(points, {
                 color: '#ffffff',
-                weight: 9,
-                opacity: 0.4,
+                weight: 10,
+                opacity: 0.6,
                 lineJoin: 'round'
             }).addTo(markerGroup);
 
-            points.forEach((p, idx) => {
-                if (idx === points.length - 1) {
-                    L.marker(p, { icon: carIcon }).addTo(markerGroup);
-                } else {
-                    L.circleMarker(p, { 
-                        radius: 6, 
-                        color: '#000000', 
-                        weight: 3, 
-                        fillColor: '#ffffff', 
-                        fillOpacity: 1 
-                    }).addTo(markerGroup);
-                }
-            });
+            // Adiciona marcadores de início e fim
+            L.circleMarker(points[0], { radius: 6, color: '#000000', fillColor: '#10b981', fillOpacity: 1, weight: 3 }).addTo(markerGroup);
+            L.marker(points[points.length - 1], { icon: carIcon }).addTo(markerGroup);
 
-            try { map.fitBounds(poly.getBounds(), { padding: [50, 50] }); } catch(e) {}
+            try { map.fitBounds(poly.getBounds(), { padding: [40, 40] }); } catch(e) {}
         }
 
         function switchTab(tab) {
@@ -566,7 +647,11 @@
             document.getElementById('map-view').classList.toggle('hidden', tab === 'itinerary');
             document.getElementById('nav-itinerary').classList.toggle('active', tab === 'itinerary');
             document.getElementById('nav-map').classList.toggle('active', tab === 'map');
-            if(tab === 'map') setTimeout(() => map.invalidateSize(), 200);
+            if(tab === 'map') {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 200);
+            }
         }
 
         function backToMenu() {
@@ -574,43 +659,172 @@
             document.getElementById('main-app').classList.add('hidden');
         }
 
-        // Função fallback de geração de dados estruturados com hotéis reais de teste
-        function mockData(userQuery) {
-            let requestedDays = 3; 
-            const match = userQuery.match(/(\d+)\s*dia/i);
-            if (match && match[1]) {
-                requestedDays = parseInt(match[1]);
-            }
+        // MOTOR HEURÍSTICO DE FALLBACK DINÂMICO (Argentina, Chile, Gramado, Roma, etc.)
+        function smartLocalGenerator(userQuery, userOrigin) {
+            const queryLower = userQuery.toLowerCase();
             
-            const days = [];
-            const mockHotels = {
-                econômico: { name: "Ibis Styles Centro", address: "R. Sen. Alencar Guimarães, 15", price: "R$ 190" },
-                standard: { name: "Bourbon Curitiba Hotel", address: "R. Cândido Lopes, 102", price: "R$ 380" },
-                premium: { name: "Nomaa Hotel Boutique", address: "R. Gutemberg, 168", price: "R$ 820" }
+            let requestedDays = 5; 
+            const dayMatch = userQuery.match(/(\d+)\s*dia/i);
+            if (dayMatch && dayMatch[1]) {
+                requestedDays = Math.min(30, parseInt(dayMatch[1]));
+            }
+
+            let hasKids = false;
+            if (queryLower.includes("criança") || queryLower.includes("crianca") || queryLower.includes("filho") || queryLower.includes("kid") || queryLower.includes("menor")) {
+                hasKids = true;
+            }
+
+            let destination = "Desconhecido";
+            let centerCoords = [-34.6037, -58.3816]; 
+            let isArgentinaChile = false;
+            let isGramado = false;
+            let isRoma = false;
+
+            if (queryLower.includes("argentina") || queryLower.includes("chile") || queryLower.includes("santiago") || queryLower.includes("buenos aires") || queryLower.includes("andes")) {
+                destination = "Argentina & Chile";
+                centerCoords = [-33.4489, -70.6693]; 
+                isArgentinaChile = true;
+            } else if (queryLower.includes("gramado") || queryLower.includes("canela") || queryLower.includes("serra gaúcha")) {
+                destination = "Gramado & Canela";
+                centerCoords = [-29.3784, -50.8739];
+                isGramado = true;
+            } else if (queryLower.includes("roma") || queryLower.includes("itália") || queryLower.includes("italia")) {
+                destination = "Roma, Itália";
+                centerCoords = [41.9028, 12.4964];
+                isRoma = true;
+            } else {
+                const matchDest = userQuery.match(/(?:em|para)\s+([A-Z][a-zÀ-ÿ]+(?:\s+[A-Z][a-zÀ-ÿ]+)*)/);
+                if (matchDest && matchDest[1]) {
+                    destination = matchDest[1];
+                } else {
+                    destination = "Destino Selecionado";
+                }
+            }
+
+            const hotelDatabase = {
+                "Argentina & Chile": {
+                    econômico: { name: "Ibis Santiago Providencia", address: "Av. Providencia 1187, Santiago", price: "R$ 210" },
+                    standard: { name: "Hotel Plaza San Francisco", address: "Av. Libertador Bernardo O'Higgins 816, Santiago", price: "R$ 450" },
+                    premium: { name: "The Ritz-Carlton Santiago", address: "Calle El Alcalde 15, Las Condes", price: "R$ 1.150" }
+                },
+                "Gramado & Canela": {
+                    econômico: { name: "Sky Serra Hotel", address: "R. Tirol, 149 - Gramado", price: "R$ 180" },
+                    standard: { name: "Hotel Alpestre", address: "R. Leopoldo Rosenfeld, 810 - Gramado", price: "R$ 410" },
+                    premium: { name: "Hotel Ritta Höppner", address: "R. Pedro Candiago, 305 - Gramado", price: "R$ 950" }
+                },
+                "Roma, Itália": {
+                    econômico: { name: "Generator Rome Hostel", address: "Via Principe Amedeo 126, Roma", price: "R$ 230" },
+                    standard: { name: "Hotel Artemide", address: "Via Nazionale 22, Roma", price: "R$ 550" },
+                    premium: { name: "Hotel de Russie", address: "Via del Babuino 9, Roma", price: "R$ 2.400" }
+                },
+                "default": {
+                    econômico: { name: "Hostel Central Express", address: "Área Central", price: "R$ 150" },
+                    standard: { name: "Plaza Central Hotel", address: "Avenida Principal, 100", price: "R$ 350" },
+                    premium: { name: "Grand Hyatt Resort & Spa", address: "Distrito Nobre", price: "R$ 980" }
+                }
             };
 
-            const hotel = mockHotels[selectedTier] || mockHotels.standard;
+            const selectedHotelSet = hotelDatabase[destination] || hotelDatabase["default"];
+            const hotel = selectedHotelSet[selectedTier] || selectedHotelSet.standard;
 
-            for(let i = 1; i <= requestedDays; i++) {
-                days.push({
-                    id: i, 
-                    title: `Cronograma Dia ${i}: Rota Cultural`, 
-                    subtitle: `Otimização de deslocamento urbano`, 
-                    weather: "17°C",
+            const daysList = [];
+
+            for (let i = 1; i <= requestedDays; i++) {
+                let timeline = [];
+                let coords = [];
+
+                // Lógica de transportação para o Dia 1
+                if (i === 1 && transportMode === 'plane') {
+                    coords = [
+                        [centerCoords[0] - 0.05, centerCoords[1] - 0.08], // Simula Aeroporto próximo
+                        centerCoords
+                    ];
+                    timeline = [
+                        { time: "06:00", activity: "Deslocamento ao Aeroporto", type: "pago", price: "R$ 60", details: `Saída de ${userOrigin || 'Origem'} rumo ao terminal aeroportuário para o embarque de viagem.` },
+                        { time: "09:00", activity: "Voo de Conexão e Pouso no Destino", type: "pago", price: "R$ 890", details: "Embarque no voo com poltronas reservadas. Café da manhã servido a bordo." },
+                        { time: "14:30", activity: "Desembarque e Transfer ao Hotel", type: "pago", price: "R$ 80", details: `Chegada ao aeroporto local e transfer privativo até o ${hotel.name}.` }
+                    ];
+                } else if (i === 1 && transportMode === 'car') {
+                    coords = [
+                        [centerCoords[0] - 0.1, centerCoords[1] - 0.1], // Estrada distante
+                        centerCoords
+                    ];
+                    timeline = [
+                        { time: "06:00", activity: "Início do Percurso Terrestre na Autoestrada", type: "pago", price: "R$ 120", details: `Saída em veículo de ${userOrigin || 'Origem'}. Abastecimento completo inicial e início de viagem.` },
+                        { time: "11:00", activity: "Parada Técnica e Lanche de Estrada", type: "pago", price: "R$ 35", details: "Parada em restaurante de conveniência na rota principal de deslocamento." },
+                        { time: "16:00", activity: "Chegada e Check-in na Hospedagem", type: "gratis", price: "Grátis", details: `Pousada no destino e check-in no ${hotel.name}.` }
+                    ];
+                } else {
+                    // Dias normais de passeio locais
+                    if (isArgentinaChile) {
+                        if (i % 2 === 0) {
+                            coords = [
+                                [-33.4372, -70.6506], // Plaza de Armas
+                                [-33.4256, -70.6146]  // Costanera
+                            ];
+                            timeline = [
+                                { time: "09:00", activity: "Tour pelo Centro Histórico de Santiago", type: "gratis", price: "Grátis", details: "Caminhada guiada pela Plaza de Armas, Catedral Metropolitana e Palácio de La Moneda." },
+                                { time: "13:00", activity: "Almoço no Mercado Central", type: "pago", price: "R$ 80", details: "Refeição típica chilena focada em frutos do mar frescos. Ótimo para provar centolla." },
+                                { time: "15:30", activity: "Subida de Funicular ao Cerro San Cristóbal", type: hasKids ? "pago" : "gratis", price: hasKids ? "R$ 15 (Meia Kids)" : "R$ 30", details: hasKids ? "Subida divertida de bondinho até o topo com as crianças, visitando o mini zoológico no topo." : "Subida clássica para vista panorâmica dos Andes." }
+                            ];
+                        } else {
+                            coords = [
+                                [-34.6037, -58.3816], // Obelisco Buenos Aires
+                                [-34.6385, -58.3621]  // Caminito
+                            ];
+                            timeline = [
+                                { time: "09:30", activity: "Caminhada Colorida pelo Caminito", type: "gratis", price: "Grátis", details: "Passeio pelo bairro de La Boca, apreciando os dançarinos de tango na rua e arquitetura colorida." },
+                                { time: "12:30", activity: "Almoço de Carnes Tradicionais", type: "pago", price: "R$ 120", details: "Refeição com cortes argentinos clássicos de bife de ancho. Suco natural cortesia para crianças." },
+                                { time: "15:00", activity: hasKids ? "Parque de Diversões de la Costa" : "Trilha na Reserva Ecológica Costanera", type: "pago", price: hasKids ? "R$ 90 (Combo Família)" : "Grátis", details: hasKids ? "Dia cheio de brinquedos mecânicos e montanhas-russas adaptadas para os menores." : "Caminhada ecológica ao lado do Rio da Prata." }
+                            ];
+                        }
+                    } else if (isGramado) {
+                        coords = [
+                            [-29.3784, -50.8739], // Centro
+                            [-29.3881, -50.8856]  // Lago Negro
+                        ];
+                        timeline = [
+                            { time: "09:00", activity: "Passeio pelo Lago Negro de Gramado", type: "gratis", price: "Grátis", details: "Caminhada pelos pinheiros alemães e hortênsias." },
+                            { time: "12:30", activity: "Almoço na Cantina Italiana de Canela", type: "pago", price: "R$ 75", details: "Rodízio de massas e galetos tradicionais da serra gaúcha." },
+                            { time: "15:00", activity: hasKids ? "Parque Mini Mundo" : "Degustação de Vinhos Jolimont", type: "pago", price: hasKids ? "R$ 24 (Meia Infantil)" : "R$ 80", details: hasKids ? "Parque com réplicas detalhadas de castelos e cidades mundiais em tamanho miniatura." : "Visita guiada pelos parreirais com degustação de rótulos premiados." }
+                        ];
+                    } else {
+                        coords = [
+                            [centerCoords[0] + (i * 0.005), centerCoords[1] + (i * 0.005)],
+                            [centerCoords[0] - (i * 0.003), centerCoords[1] - (i * 0.002)]
+                        ];
+                        timeline = [
+                            { time: "09:00", activity: `Exploração Histórica em ${destination}`, type: "gratis", price: "Grátis", details: "Caminhada e mapeamento dos pontos de interesse arquitetônico e cultural da região." },
+                            { time: "13:00", activity: "Almoço Regional Típico", type: "pago", price: "R$ 90", details: "Refeição balanceada baseada na gastronomia local." },
+                            { time: "15:30", activity: hasKids ? "Parque Temático & Parquinhos" : "Museu Arqueológico", type: "pago", price: hasKids ? "R$ 35" : "R$ 60", details: hasKids ? "Atividades físicas livres ao ar livre e brinquedos infantis." : "Visita guiada para absorção da história local." }
+                        ];
+                    }
+                }
+
+                let hotelPriceNum = parseInt(hotel.price.replace("R$ ", ""));
+                let ticketSum = timeline.reduce((acc, curr) => {
+                    let priceVal = curr.price.match(/\d+/);
+                    return acc + (priceVal ? parseInt(priceVal[0]) : 0);
+                }, 0);
+
+                let mealCost = selectedTier === 'premium' ? 180 : (selectedTier === 'standard' ? 90 : 45);
+
+                daysList.push({
+                    id: i,
+                    title: `Dia ${i}: Explorando ${destination}`,
+                    subtitle: `Deslocamento ideal via ${transportMode === 'car' ? 'Terrestre (Carro)' : 'Aéreo (Avião)'}`,
+                    weather: `${12 + (i % 8)}°C`,
                     hotel: hotel,
-                    timeline: [
-                        { time: "09:00", activity: "Jardim Botânico de Curitiba", type: "gratis", price: "Grátis", details: "Passeio pela famosa estufa de vidro de três cúpulas e caminhada pelas trilhas floridas." },
-                        { time: "12:30", activity: "Almoço no Setor Histórico", type: "pago", price: "R$ 45", details: "Almoço em restaurante tradicional com gastronomia regional e massas." },
-                        { time: "15:00", activity: "Entrada na Ópera de Arame", type: "pago", price: "R$ 15", details: "Exploração da estrutura tubular de metal e vidro em cima de um antigo lago artificial." }
-                    ],
-                    ticket: "R$ 15", 
-                    meal: "R$ 45", 
-                    total: `R$ ${parseInt(hotel.price.replace("R$ ", "")) + 15 + 45}`, 
-                    km: `${6 + i}km`,
-                    coords: [[-25.43, -49.27], [-25.442, -49.23], [-25.41, -49.275]]
+                    timeline: timeline,
+                    ticket: `R$ ${ticketSum}`,
+                    meal: `R$ ${mealCost}`,
+                    total: `R$ ${hotelPriceNum + ticketSum + mealCost}`,
+                    km: `${5 + (i % 10)}km`,
+                    coords: coords
                 });
             }
-            return days;
+
+            return daysList;
         }
     </script>
 </body>
