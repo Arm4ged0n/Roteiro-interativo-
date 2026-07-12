@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Roteiro.IA — Dashboard de Viagem</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -33,6 +33,7 @@
   flex-direction:column;
   background:var(--bg-deep);
   overflow:hidden;
+  padding-top:env(safe-area-inset-top);
 }
 @media(min-width:640px){
   body{
@@ -42,8 +43,11 @@
   }
   #app-shell{
     height:calc(100vh - 48px);
+    height:calc(100dvh - 48px);
+    max-height:900px;
     border-radius:32px;
     box-shadow:0 0 0 1px var(--border), 0 50px 100px -20px rgba(0,0,0,.9);
+    padding-top:0;
   }
 }
 @media(max-width:374px){
@@ -57,7 +61,9 @@ body{
   font-family:'Plus Jakarta Sans',sans-serif;
   background:var(--bg-deep);
   color:var(--text-main);
-  margin:0;padding:0;height:100vh;
+  margin:0;padding:0;
+  height:100vh;
+  height:100dvh;
   display:flex;flex-direction:column;
   overflow:hidden;
 }
@@ -67,10 +73,10 @@ body{
 /* ---- splash ---- */
 .char{display:inline-block;opacity:0;transform:translateY(-60px);filter:blur(8px);animation:charFall .55s cubic-bezier(.175,.885,.32,1.275) forwards}
 @keyframes charFall{0%{opacity:0;transform:translateY(-60px);filter:blur(8px)}60%{opacity:1;filter:blur(0)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
-.splash-screen{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;transition:opacity .5s ease-out}
+.splash-screen{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;transition:opacity .5s ease-out;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 
 /* ---- overlay form ---- */
-.input-overlay{position:absolute;inset:0;background:rgba(0,0,0,.96);backdrop-filter:blur(20px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.input-overlay{position:absolute;inset:0;background:rgba(0,0,0,.96);backdrop-filter:blur(20px);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:20px;padding-top:max(20px, env(safe-area-inset-top));padding-bottom:max(20px, env(safe-area-inset-bottom));overflow-y:auto}
 
 /* ---- top tabs ---- */
 .top-tabs{display:flex;gap:6px;padding:14px 20px 10px;background:var(--bg-deep);border-bottom:1px solid var(--border);z-index:100}
@@ -82,10 +88,10 @@ body{
 .day-bubble.active{background:var(--accent);color:#000;border-color:var(--accent);box-shadow:0 8px 18px -4px rgba(251,191,36,.35);transform:scale(1.06)}
 
 .main-container{flex:1;position:relative;overflow:hidden}
-.view-section{position:absolute;inset:0;overflow-y:auto;padding:20px;padding-bottom:110px;transition:opacity .3s ease}
+.view-section{position:absolute;inset:0;overflow-y:auto;padding:20px;padding-bottom:calc(110px + env(safe-area-inset-bottom));transition:opacity .3s ease}
 #map{height:100%;width:100%;z-index:1;filter:grayscale(1) invert(1) contrast(1.15)}
 
-.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.96);backdrop-filter:blur(18px);height:74px;display:flex;border-top:1px solid var(--border);z-index:150}
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.96);backdrop-filter:blur(18px);height:74px;padding-bottom:env(safe-area-inset-bottom);box-sizing:content-box;display:flex;border-top:1px solid var(--border);z-index:150}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#4a4a4a;font-size:.66rem;font-weight:800;letter-spacing:.03em}
 .nav-btn.active{color:var(--accent)}
 .nav-btn svg{width:20px;height:20px}
@@ -107,7 +113,7 @@ body{
 .kpi{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:16px}
 .kpi-val{font-size:1.5rem;font-weight:800}
 
-.edit-fab{position:absolute;top:16px;right:16px;z-index:500;background:var(--bg-card);padding:10px 14px;border-radius:14px;border:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:.65rem;font-weight:800;color:var(--accent)}
+.edit-fab{position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;z-index:500;background:var(--bg-card);padding:10px 14px;border-radius:14px;border:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:.65rem;font-weight:800;color:var(--accent)}
 .edit-fab svg{width:14px;height:14px}
 
 .leaflet-interactive{stroke-dasharray:1,10;stroke-linecap:round;animation:dash 18s linear infinite}
@@ -195,6 +201,15 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
         </div>
       </div>
 
+      <div class="card">
+        <div class="flex items-center justify-between mb-2">
+          <span class="eyebrow text-amber-400">Chave da API Gemini</span>
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="text-[10px] font-black text-emerald-500 uppercase">Pegar grátis</a>
+        </div>
+        <input type="password" id="gemini-api-key" onchange="storageSet('gemini_api_key', this.value)" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none" placeholder="Cole sua chave aqui">
+        <p class="text-[10px] text-neutral-600 font-semibold mt-2 leading-relaxed">Necessária para a IA gerar o roteiro. Fica salva só neste dispositivo/navegador.</p>
+      </div>
+
       <button onclick="generateItinerary()" id="gen-btn" class="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl mt-2 text-base uppercase tracking-widest hover:bg-amber-400 transition-colors">Gerar roteiro</button>
 
       <div id="gen-progress" class="hidden">
@@ -223,7 +238,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
     <div id="manage-content"></div>
   </div>
 </div>
-<button id="new-trip-btn" class="hidden absolute top-16 right-16 z-[500] text-[10px] font-bold text-neutral-600" onclick="newTrip()">Nova viagem</button>
+<button id="new-trip-btn" class="hidden absolute right-4 z-[500] text-[10px] font-bold text-neutral-600" style="top:calc(56px + env(safe-area-inset-top))" onclick="newTrip()">Nova viagem</button>
 
 <header id="app-header" class="hidden items-center gap-3 px-5 pt-5 pb-3 bg-black border-b border-neutral-900">
   <div class="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center shrink-0">
@@ -388,11 +403,35 @@ function startSplashAnimation(){
 }
 startSplashAnimation();
 
+// ---------- storage universal: window.storage (preview no Claude.ai) ou localStorage (deploy real, ex. Vercel) ----------
+async function storageSet(key, value){
+  try{
+    if(window.storage && typeof window.storage.set === 'function'){
+      await window.storage.set(key, value);
+      return;
+    }
+  }catch(e){ /* segue para fallback */ }
+  try{ localStorage.setItem(key, value); }catch(e){ console.error('[Roteiro.IA] Falha ao salvar', key, e); }
+}
+async function storageGet(key){
+  try{
+    if(window.storage && typeof window.storage.get === 'function'){
+      const r = await window.storage.get(key);
+      return r ? r.value : null;
+    }
+  }catch(e){ /* segue para fallback */ }
+  try{ return localStorage.getItem(key); }catch(e){ return null; }
+}
+
 async function boot(){
   try{
-    const saved = await window.storage.get('trip:current');
-    if(saved && saved.value){
-      const parsed = JSON.parse(saved.value);
+    const savedKey = await storageGet('gemini_api_key');
+    if(savedKey) document.getElementById('gemini-api-key').value = savedKey;
+  }catch(e){}
+  try{
+    const saved = await storageGet('trip:current');
+    if(saved){
+      const parsed = JSON.parse(saved);
       window.itineraryData = parsed.itinerary || [];
       window.tripMeta = parsed.meta || {};
       window.tripDistances = parsed.distances || {};
@@ -496,13 +535,14 @@ window.newTrip = async ()=>{
 
 function toast(msg, isError){
   const el = document.createElement('div');
-  el.className = `absolute top-10 left-1/2 -translate-x-1/2 ${isError?'bg-red-600':'bg-emerald-600'} text-white px-6 py-3 rounded-xl z-[3000] font-bold text-sm text-center max-w-[85%]`;
+  el.className = `absolute left-1/2 -translate-x-1/2 ${isError?'bg-red-600':'bg-emerald-600'} text-white px-6 py-3 rounded-xl z-[3000] font-bold text-sm text-center max-w-[85%]`;
+  el.style.top = 'calc(24px + env(safe-area-inset-top))';
   el.innerText = msg;
   (document.getElementById('app-shell') || document.body).appendChild(el);
   setTimeout(()=>el.remove(), 3000);
 }
 
-// ---------- AI generation (Anthropic API, one call per day) ----------
+// ---------- AI generation (Google Gemini API, uma chamada por dia — funciona direto do navegador via CORS, sem backend) ----------
 function dateList(start, end){
   const out = [];
   let d = new Date(start + 'T00:00:00');
@@ -515,6 +555,11 @@ function dateList(start, end){
 }
 
 async function callClaudeForDay(dayIndex, totalDays, date, ctx, prevSummary){
+  const apiKey = (document.getElementById('gemini-api-key')?.value || '').trim() || (await storageGet('gemini_api_key') || '').trim();
+  if(!apiKey){
+    throw new Error('Configure sua chave da API Gemini no formulário (é grátis em aistudio.google.com/apikey).');
+  }
+
   const transportLabel = ctx.transport === 'carro' ? 'carro' : 'avião';
   let startInstruction = '';
   if(dayIndex === 1){
@@ -529,10 +574,11 @@ Contexto da viagem: origem ${ctx.origin || 'não especificada'}, destino ${ctx.d
 Preferências do usuário (texto livre, pode conter instruções por dia): "${ctx.extra || 'nenhuma'}"
 IMPORTANTE: se as preferências mencionarem um dia específico (ex: "dia ${dayIndex}:", "no ${dayIndex}º dia", ou uma lista numerada onde a posição ${dayIndex} corresponde a este dia), você DEVE seguir essa instrução para montar exatamente o tema e as atividades deste dia. Ignore menções a outros dias que não sejam o dia ${dayIndex}. Se não houver menção a este dia específico, use as preferências gerais.
 PONTOS TURÍSTICOS: priorize atrações reais, famosas e mais bem avaliadas do destino — os locais que qualquer guia de viagem confiável (ex: Lonely Planet, TripAdvisor, Google Maps) recomendaria como imperdíveis, incluindo marcos históricos, museus, monumentos, mirantes, praias, parques e experiências gastronômicas de destaque local. Evite inventar lugares genéricos ou fictícios; use nomes reais e coordenadas geográficas (lat/lng) verdadeiras desses locais.
+DURAÇÃO: para cada item da timeline, estime quanto tempo a visita costuma levar (ex: "45min", "1h30", "2h") no campo "duration", com base no que é realista para aquele tipo de atração.
 ${startInstruction}
 ${prevSummary ? 'Resumo do dia anterior (para manter continuidade geográfica e não repetir atrações já visitadas): ' + prevSummary : ''}
-Responda APENAS com um objeto JSON válido, sem markdown, sem texto extra, no formato exato:
-{"title":"Dia ${dayIndex}: <tema do dia>","subtitle":"<bairro ou região>","weather":"<temperatura ex 24°C>","hotel":{"name":"<nome>","address":"<endereço>","lat":<numero>,"lng":<numero>},"timeline":[{"time":"08:00","desc":"<atividade curta>","price":"R$ <valor>","lat":<numero>,"lng":<numero>}],"meal":"R$ <valor>","ticket":"R$ <valor>","total":"R$ <valor>"}
+Responda APENAS com um objeto JSON válido, no formato exato:
+{"title":"Dia ${dayIndex}: <tema do dia>","subtitle":"<bairro ou região>","weather":"<temperatura ex 24°C>","hotel":{"name":"<nome>","address":"<endereço>","lat":<numero>,"lng":<numero>},"timeline":[{"time":"08:00","duration":"1h30","desc":"<atividade curta>","price":"R$ <valor>","lat":<numero>,"lng":<numero>}],"meal":"R$ <valor>","ticket":"R$ <valor>","total":"R$ <valor>"}
 Use no mínimo 4 e no máximo 7 itens no timeline, todos em locais turísticos reais e reconhecidos do destino, com coordenadas geográficas reais (lat/lng) desses locais — nunca coordenadas aproximadas ou inventadas. Valores em Reais (BRL), realistas para o orçamento indicado.`;
 
   const controller = new AbortController();
@@ -540,13 +586,12 @@ Use no mínimo 4 e no máximo 7 itens no timeline, todos em locais turísticos r
 
   let res;
   try{
-    res = await fetch("https://api.anthropic.com/v1/messages", {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }]
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
       }),
       signal: controller.signal
     });
@@ -560,14 +605,16 @@ Use no mínimo 4 e no máximo 7 itens no timeline, todos em locais turísticos r
   if(!res.ok){
     let detail = '';
     try{ detail = JSON.stringify(await res.json()); }catch(e){}
+    if(res.status === 400 || res.status === 403) throw new Error(`Chave da API Gemini inválida ou sem permissão (status ${res.status}). Confira a chave.`);
+    if(res.status === 429) throw new Error('Limite de uso da API Gemini atingido no momento. Aguarde um pouco e tente de novo.');
     throw new Error(`API retornou status ${res.status} ${detail}`);
   }
 
   const data = await res.json();
-  const textBlock = (data.content || []).find(b => b.type === 'text');
-  if(!textBlock || !textBlock.text) throw new Error('Resposta da IA veio sem texto: ' + JSON.stringify(data).slice(0,200));
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(!text) throw new Error('Resposta da IA veio sem texto: ' + JSON.stringify(data).slice(0,200));
 
-  const clean = textBlock.text.replace(/```json|```/g, '').trim();
+  const clean = text.replace(/```json|```/g, '').trim();
   let parsed;
   try{
     parsed = JSON.parse(clean);
@@ -594,6 +641,12 @@ window.generateItinerary = async ()=>{
     toast('A data de volta precisa ser depois da ida.', true);
     return;
   }
+  const apiKeyValue = document.getElementById('gemini-api-key').value.trim();
+  if(!apiKeyValue){
+    toast('Cole sua chave da API Gemini antes de gerar (grátis em aistudio.google.com/apikey).', true);
+    return;
+  }
+  await storageSet('gemini_api_key', apiKeyValue);
 
   const dates = dateList(startDate, endDate);
   console.log('[Roteiro.IA] Gerando', dates.length, 'dias:', dates);
@@ -684,7 +737,7 @@ window.generateItinerary = async ()=>{
 
 async function persistTrip(){
   try{
-    await window.storage.set('trip:current', JSON.stringify({
+    await storageSet('trip:current', JSON.stringify({
       meta: window.tripMeta,
       itinerary: window.itineraryData,
       distances: window.tripDistances
@@ -813,9 +866,12 @@ function loadDay(id){
     li.innerHTML = `
       <div class="flex items-start">
         <div class="timeline-dot"></div>
-        <div class="text-sm font-bold text-neutral-200 leading-tight"><span class="mono text-amber-400">${item.time}</span> — ${item.desc}</div>
+        <div class="text-sm font-bold text-neutral-200 leading-tight">
+          <span class="mono text-amber-400">${item.time || ''}</span>${item.duration ? ` <span class="mono text-neutral-500 text-[10px]">· ${item.duration}</span>` : ''}<br>
+          ${item.desc}
+        </div>
       </div>
-      <div class="text-[10px] font-black text-emerald-500 ml-4 mono">${item.price}</div>`;
+      <div class="text-[10px] font-black text-emerald-500 ml-4 mono shrink-0">${item.price || ''}</div>`;
     tl.appendChild(li);
   });
 
@@ -1043,9 +1099,10 @@ window.openDayEditor = (id)=>{
   const c = document.getElementById('manage-content');
   const timelineRows = (day.timeline||[]).map((item, idx)=>`
     <div class="flex gap-2 mb-2 timeline-edit-row" data-idx="${idx}">
-      <input type="text" value="${(item.time||'').replace(/"/g,'&quot;')}" placeholder="08:00" class="w-16 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs mono focus:border-amber-400 outline-none tl-time">
-      <input type="text" value="${(item.desc||'').replace(/"/g,'&quot;')}" placeholder="Atividade" class="flex-1 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs focus:border-amber-400 outline-none tl-desc">
-      <input type="text" value="${(item.price||'').replace(/"/g,'&quot;')}" placeholder="R$ 0" class="w-20 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs mono focus:border-amber-400 outline-none tl-price">
+      <input type="text" value="${(item.time||'').replace(/"/g,'&quot;')}" placeholder="08:00" class="w-14 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-time">
+      <input type="text" value="${(item.duration||'').replace(/"/g,'&quot;')}" placeholder="1h30" class="w-14 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-duration">
+      <input type="text" value="${(item.desc||'').replace(/"/g,'&quot;')}" placeholder="Atividade" class="flex-1 min-w-0 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs focus:border-amber-400 outline-none tl-desc">
+      <input type="text" value="${(item.price||'').replace(/"/g,'&quot;')}" placeholder="R$ 0" class="w-16 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-price">
       <button onclick="this.parentElement.remove()" class="text-red-400 px-2"><i data-lucide="x" style="width:14px;height:14px"></i></button>
     </div>`).join('');
 
@@ -1117,9 +1174,10 @@ window.addTimelineRow = ()=>{
   const div = document.createElement('div');
   div.className = 'flex gap-2 mb-2 timeline-edit-row';
   div.innerHTML = `
-    <input type="text" placeholder="08:00" class="w-16 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs mono focus:border-amber-400 outline-none tl-time">
-    <input type="text" placeholder="Atividade" class="flex-1 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs focus:border-amber-400 outline-none tl-desc">
-    <input type="text" placeholder="R$ 0" class="w-20 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs mono focus:border-amber-400 outline-none tl-price">
+    <input type="text" placeholder="08:00" class="w-14 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-time">
+    <input type="text" placeholder="1h30" class="w-14 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-duration">
+    <input type="text" placeholder="Atividade" class="flex-1 min-w-0 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs focus:border-amber-400 outline-none tl-desc">
+    <input type="text" placeholder="R$ 0" class="w-16 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-price">
     <button onclick="this.parentElement.remove()" class="text-red-400 px-2"><i data-lucide="x" style="width:14px;height:14px"></i></button>`;
   wrap.appendChild(div);
   lucide.createIcons();
@@ -1144,11 +1202,12 @@ window.saveDayEdits = async (id)=>{
   const newTimeline = [];
   rows.forEach((row, idx)=>{
     const time = row.querySelector('.tl-time').value.trim();
+    const duration = row.querySelector('.tl-duration').value.trim();
     const desc = row.querySelector('.tl-desc').value.trim();
     const price = row.querySelector('.tl-price').value.trim();
     if(!desc) return;
     const original = originalTimeline[idx];
-    const item = { time, desc, price };
+    const item = { time, duration, desc, price };
     if(original && typeof original.lat === 'number' && typeof original.lng === 'number'){
       item.lat = original.lat; item.lng = original.lng;
     }
