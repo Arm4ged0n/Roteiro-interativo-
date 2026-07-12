@@ -22,6 +22,37 @@
   --text-muted:#8a8a8a;
 }
 *{box-sizing:border-box}
+
+#app-shell{
+  position:relative;
+  width:100%;
+  max-width:480px;
+  margin:0 auto;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg-deep);
+  overflow:hidden;
+}
+@media(min-width:640px){
+  body{
+    background:radial-gradient(circle at 50% 0%, #0d0d0d 0%, #000 60%);
+    align-items:center;
+    justify-content:center;
+  }
+  #app-shell{
+    height:calc(100vh - 48px);
+    border-radius:32px;
+    box-shadow:0 0 0 1px var(--border), 0 50px 100px -20px rgba(0,0,0,.9);
+  }
+}
+@media(max-width:374px){
+  .view-section{padding:14px}
+  .card{padding:16px;border-radius:18px}
+  .kpi{padding:12px}
+  .kpi-val{font-size:1.25rem}
+}
+
 body{
   font-family:'Plus Jakarta Sans',sans-serif;
   background:var(--bg-deep);
@@ -36,10 +67,10 @@ body{
 /* ---- splash ---- */
 .char{display:inline-block;opacity:0;transform:translateY(-60px);filter:blur(8px);animation:charFall .55s cubic-bezier(.175,.885,.32,1.275) forwards}
 @keyframes charFall{0%{opacity:0;transform:translateY(-60px);filter:blur(8px)}60%{opacity:1;filter:blur(0)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
-.splash-screen{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;transition:opacity .5s ease-out}
+.splash-screen{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;transition:opacity .5s ease-out}
 
 /* ---- overlay form ---- */
-.input-overlay{position:fixed;inset:0;background:rgba(0,0,0,.96);backdrop-filter:blur(20px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.input-overlay{position:absolute;inset:0;background:rgba(0,0,0,.96);backdrop-filter:blur(20px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 
 /* ---- top tabs ---- */
 .top-tabs{display:flex;gap:6px;padding:14px 20px 10px;background:var(--bg-deep);border-bottom:1px solid var(--border);z-index:100}
@@ -54,7 +85,7 @@ body{
 .view-section{position:absolute;inset:0;overflow-y:auto;padding:20px;padding-bottom:110px;transition:opacity .3s ease}
 #map{height:100%;width:100%;z-index:1;filter:grayscale(1) invert(1) contrast(1.15)}
 
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.96);backdrop-filter:blur(18px);height:74px;display:flex;border-top:1px solid var(--border);z-index:150}
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.96);backdrop-filter:blur(18px);height:74px;display:flex;border-top:1px solid var(--border);z-index:150}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#4a4a4a;font-size:.66rem;font-weight:800;letter-spacing:.03em}
 .nav-btn.active{color:var(--accent)}
 .nav-btn svg{width:20px;height:20px}
@@ -76,7 +107,7 @@ body{
 .kpi{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:16px}
 .kpi-val{font-size:1.5rem;font-weight:800}
 
-.edit-fab{position:fixed;top:16px;right:16px;z-index:500;background:var(--bg-card);padding:10px 14px;border-radius:14px;border:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:.65rem;font-weight:800;color:var(--accent)}
+.edit-fab{position:absolute;top:16px;right:16px;z-index:500;background:var(--bg-card);padding:10px 14px;border-radius:14px;border:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:.65rem;font-weight:800;color:var(--accent)}
 .edit-fab svg{width:14px;height:14px}
 
 .leaflet-interactive{stroke-dasharray:1,10;stroke-linecap:round;animation:dash 18s linear infinite}
@@ -91,6 +122,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 </style>
 </head>
 <body>
+<div id="app-shell">
 
 <div id="splash" class="splash-screen">
   <div id="animated-logo" class="text-5xl font-black text-white italic"></div>
@@ -109,7 +141,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
     <div class="space-y-5">
       <div>
         <label class="eyebrow text-amber-400 mb-2 block">Origem <span class="text-neutral-600 normal-case font-semibold">(ponto de partida se for de carro)</span></label>
-        <input type="text" id="user-origin" class="w-full bg-black border-2 border-neutral-900 rounded-2xl py-4 px-5 text-white mb-4 focus:border-amber-400 outline-none" placeholder="Ex: Porto Alegre, RS">
+        <div class="flex gap-2 mb-4">
+          <input type="text" id="user-origin" class="flex-1 min-w-0 bg-black border-2 border-neutral-900 rounded-2xl py-4 px-5 text-white focus:border-amber-400 outline-none" placeholder="Ex: Porto Alegre, RS">
+          <button type="button" onclick="useMyLocation()" id="use-location-btn" title="Usar minha localização" class="shrink-0 w-14 bg-black border-2 border-neutral-900 rounded-2xl text-amber-400 flex items-center justify-center hover:border-amber-400 transition-colors">
+            <i data-lucide="locate-fixed" style="width:19px;height:19px"></i>
+          </button>
+        </div>
 
         <label class="eyebrow text-amber-400 mb-2 block">Destino</label>
         <input type="text" id="user-destination" class="w-full bg-black border-2 border-neutral-900 rounded-2xl py-4 px-5 text-white mb-4 focus:border-amber-400 outline-none" placeholder="Para onde você quer ir?">
@@ -186,7 +223,14 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
     <div id="manage-content"></div>
   </div>
 </div>
-<button id="new-trip-btn" class="hidden fixed top-16 right-16 z-[500] text-[10px] font-bold text-neutral-600" onclick="newTrip()">Nova viagem</button>
+<button id="new-trip-btn" class="hidden absolute top-16 right-16 z-[500] text-[10px] font-bold text-neutral-600" onclick="newTrip()">Nova viagem</button>
+
+<header id="app-header" class="hidden items-center gap-3 px-5 pt-5 pb-3 bg-black border-b border-neutral-900">
+  <div class="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center shrink-0">
+    <i data-lucide="compass" style="width:18px;height:18px;color:#000;stroke-width:2.5"></i>
+  </div>
+  <p class="text-lg font-black italic text-white leading-none">Roteiro<span class="text-amber-400">.IA</span></p>
+</header>
 
 <div class="top-tabs hidden" id="top-tabs">
   <button onclick="switchView('dashboard')" id="tab-dashboard" class="top-tab active">Visão geral</button>
@@ -317,6 +361,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
   <button onclick="switchView('map')" id="nav-map" class="nav-btn"><i data-lucide="navigation-2"></i><span>Mapa</span></button>
 </nav>
 
+</div>
 <script>
 window.itineraryData = [];
 window.tripMeta = {};
@@ -368,6 +413,8 @@ boot();
 
 function showAppUI(){
   document.getElementById('input-screen').style.display = 'none';
+  document.getElementById('app-header').classList.remove('hidden');
+  document.getElementById('app-header').classList.add('flex');
   document.getElementById('top-tabs').classList.remove('hidden');
   document.getElementById('day-selector').classList.remove('hidden');
   document.getElementById('bottom-navigation').classList.remove('hidden');
@@ -407,6 +454,40 @@ window.setTransport = (t)=>{
 };
 window.openEditor = ()=>document.getElementById('input-screen').style.display='flex';
 window.closeEditor = ()=>document.getElementById('input-screen').style.display='none';
+
+window.useMyLocation = ()=>{
+  const btn = document.getElementById('use-location-btn');
+  const input = document.getElementById('user-origin');
+  if(!navigator.geolocation){
+    toast('Geolocalização não suportada neste navegador.', true);
+    return;
+  }
+  btn.disabled = true;
+  btn.style.opacity = '.5';
+  navigator.geolocation.getCurrentPosition(async (pos)=>{
+    const { latitude, longitude } = pos.coords;
+    try{
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`);
+      const data = await res.json();
+      const addr = data.address || {};
+      const city = addr.city || addr.town || addr.village || addr.municipality || '';
+      const state = addr.state_code || addr.state || '';
+      const label = (city && state) ? `${city}, ${state}` : (data.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+      input.value = label;
+      toast('Localização atual adicionada.');
+    }catch(e){
+      input.value = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      toast('Não consegui identificar o endereço, usei as coordenadas.', true);
+    }finally{
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  }, (err)=>{
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    toast('Não foi possível obter sua localização: ' + err.message, true);
+  }, { enableHighAccuracy:true, timeout:10000 });
+};
 window.newTrip = async ()=>{
   if(!confirm('Começar uma nova viagem? O roteiro atual será substituído quando você gerar um novo.')) return;
   document.getElementById('close-editor-btn').classList.remove('hidden');
@@ -415,9 +496,9 @@ window.newTrip = async ()=>{
 
 function toast(msg, isError){
   const el = document.createElement('div');
-  el.className = `fixed top-10 left-1/2 -translate-x-1/2 ${isError?'bg-red-600':'bg-emerald-600'} text-white px-6 py-3 rounded-xl z-[3000] font-bold text-sm`;
+  el.className = `absolute top-10 left-1/2 -translate-x-1/2 ${isError?'bg-red-600':'bg-emerald-600'} text-white px-6 py-3 rounded-xl z-[3000] font-bold text-sm text-center max-w-[85%]`;
   el.innerText = msg;
-  document.body.appendChild(el);
+  (document.getElementById('app-shell') || document.body).appendChild(el);
   setTimeout(()=>el.remove(), 3000);
 }
 
@@ -443,15 +524,16 @@ async function callClaudeForDay(dayIndex, totalDays, date, ctx, prevSummary){
       startInstruction = `O transporte da viagem é de AVIÃO. O primeiro item da timeline deste dia deve ser a chegada no aeroporto real mais próximo de ${ctx.destination} (use o nome oficial do aeroporto), com horário de chegada e coordenadas reais (lat/lng) desse aeroporto. Os itens seguintes acontecem a partir da saída do aeroporto.`;
     }
   }
-  const prompt = `Você é um planejador de viagens especialista. Gere o roteiro do DIA ${dayIndex} de ${totalDays} de uma viagem.
+  const prompt = `Você é um planejador de viagens especialista, com profundo conhecimento dos melhores pontos turísticos, atrações e experiências do mundo. Gere o roteiro do DIA ${dayIndex} de ${totalDays} de uma viagem.
 Contexto da viagem: origem ${ctx.origin || 'não especificada'}, destino ${ctx.destination}, transporte: ${transportLabel}, data deste dia: ${date}, orçamento: ${ctx.tier}, hospedagem: ${ctx.acc}.
 Preferências do usuário (texto livre, pode conter instruções por dia): "${ctx.extra || 'nenhuma'}"
-IMPORTANTE: se as preferências mencionarem um dia específico (ex: "dia ${dayIndex}:", "no ${dayIndex}º dia", ou uma lista numerada onde a posição ${dayIndex} corresponde a este dia), você DEVE seguir essa instrução para montar exatamente o tema e as atividades deste dia. Ignore menções a outros dias que não sejam o dia ${dayIndex}. Se não houver menção a este dia específico, use as preferências gerais e seu conhecimento do destino.
+IMPORTANTE: se as preferências mencionarem um dia específico (ex: "dia ${dayIndex}:", "no ${dayIndex}º dia", ou uma lista numerada onde a posição ${dayIndex} corresponde a este dia), você DEVE seguir essa instrução para montar exatamente o tema e as atividades deste dia. Ignore menções a outros dias que não sejam o dia ${dayIndex}. Se não houver menção a este dia específico, use as preferências gerais.
+PONTOS TURÍSTICOS: priorize atrações reais, famosas e mais bem avaliadas do destino — os locais que qualquer guia de viagem confiável (ex: Lonely Planet, TripAdvisor, Google Maps) recomendaria como imperdíveis, incluindo marcos históricos, museus, monumentos, mirantes, praias, parques e experiências gastronômicas de destaque local. Evite inventar lugares genéricos ou fictícios; use nomes reais e coordenadas geográficas (lat/lng) verdadeiras desses locais.
 ${startInstruction}
-${prevSummary ? 'Resumo do dia anterior (para manter continuidade geográfica e não repetir atividades): ' + prevSummary : ''}
+${prevSummary ? 'Resumo do dia anterior (para manter continuidade geográfica e não repetir atrações já visitadas): ' + prevSummary : ''}
 Responda APENAS com um objeto JSON válido, sem markdown, sem texto extra, no formato exato:
 {"title":"Dia ${dayIndex}: <tema do dia>","subtitle":"<bairro ou região>","weather":"<temperatura ex 24°C>","hotel":{"name":"<nome>","address":"<endereço>","lat":<numero>,"lng":<numero>},"timeline":[{"time":"08:00","desc":"<atividade curta>","price":"R$ <valor>","lat":<numero>,"lng":<numero>}],"meal":"R$ <valor>","ticket":"R$ <valor>","total":"R$ <valor>"}
-Use no mínimo 4 e no máximo 7 itens no timeline, com coordenadas reais (lat/lng) de lugares plausíveis no destino. Valores em Reais (BRL), realistas para o orçamento indicado.`;
+Use no mínimo 4 e no máximo 7 itens no timeline, todos em locais turísticos reais e reconhecidos do destino, com coordenadas geográficas reais (lat/lng) desses locais — nunca coordenadas aproximadas ou inventadas. Valores em Reais (BRL), realistas para o orçamento indicado.`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(()=>controller.abort(), 30000);
