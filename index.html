@@ -127,6 +127,76 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 .progress-fill{height:100%;background:var(--accent);transition:width .3s ease}
 
 .timeline-dot{position:absolute;left:-33px;width:14px;height:14px;background:var(--accent);border-radius:50%;border:4px solid #000}
+
+/* ---- loading animations ---- */
+.pulse-ring{
+  position:absolute;
+  width:60px;
+  height:60px;
+  border:3px solid var(--accent);
+  border-radius:50%;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  opacity:0;
+  animation:pulseRing 1.5s ease-out infinite;
+}
+.pulse-ring:nth-child(2){animation-delay:0.5s}
+@keyframes pulseRing{
+  0%{transform:translate(-50%, -50%) scale(0.8); opacity:1}
+  100%{transform:translate(-50%, -50%) scale(2); opacity:0}
+}
+
+.status-message{
+  font-size:.75rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--text-muted);
+  animation:fadeInOut 2s ease-in-out infinite;
+}
+@keyframes fadeInOut{
+  0%{opacity:0.5}
+  50%{opacity:1}
+  100%{opacity:0.5}
+}
+
+.progress-bar-glow{
+  position:absolute;
+  top:0;
+  left:0;
+  height:100%;
+  background:linear-gradient(90deg, transparent, rgba(251,191,36,0.4), transparent);
+  animation:shimmer 1.5s infinite;
+  border-radius:99px;
+}
+@keyframes shimmer{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(100%)}
+}
+
+.day-card-skeleton{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:20px;
+  margin-bottom:12px;
+}
+.skeleton-line{
+  height:8px;
+  background:linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
+  border-radius:4px;
+  margin-bottom:12px;
+  animation:shimmerSkeleton 2s infinite;
+}
+.skeleton-line:last-child{margin-bottom:0}
+.skeleton-line.w-1\/2{width:50%}
+.skeleton-line.w-3\/4{width:75%}
+.skeleton-line.w-full{width:100%}
+@keyframes shimmerSkeleton{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
 </style>
 </head>
 <body>
@@ -203,25 +273,47 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
         </div>
       </div>
 
-      <div class="card">
-        <div class="flex items-center justify-between mb-2">
-          <span class="eyebrow text-amber-400">Chave da API Gemini</span>
-          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="text-[10px] font-black text-emerald-500 uppercase">Pegar grátis</a>
-        </div>
-        <input type="" id="gemini-api-key" onchange="storageSet('gemini_api_key', this.value)" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none" placeholder="Cole sua chave aqui">
-        <p class="text-[10px] text-neutral-600 font-semibold mt-2 leading-relaxed">Necessária para a IA gerar o roteiro. Fica salva só neste dispositivo/navegador — cole uma vez e não pede de novo.</p>
-      </div>
-
       <button onclick="generateItinerary()" id="gen-btn" class="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl mt-2 text-base uppercase tracking-widest hover:bg-amber-400 transition-colors">Gerar roteiro</button>
 
       <div id="gen-progress" class="hidden">
-        <div class="flex justify-between eyebrow text-neutral-400 mb-2">
-          <span id="progress-label">Gerando dia 1...</span>
-          <span id="progress-pct" class="mono">0%</span>
+        <div class="mb-6">
+          <div class="flex justify-between eyebrow text-neutral-500 mb-4">
+            <span id="progress-label">Gerando dia 1...</span>
+            <span id="progress-pct" class="mono text-amber-400">0%</span>
+          </div>
+          <div class="progress-track relative overflow-hidden h-2">
+            <div id="progress-fill" class="progress-fill h-full transition-all duration-300" style="width:0%"></div>
+            <div class="progress-bar-glow"></div>
+          </div>
         </div>
-        <div class="progress-track"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
-        <p id="progress-status" class="text-[10px] text-neutral-500 font-semibold mt-2 mono"></p>
-        <button type="button" onclick="cancelGeneration()" class="w-full text-[10px] font-black text-red-400 uppercase mt-3 py-2 border border-red-900 rounded-xl">Cancelar</button>
+
+        <div class="bg-neutral-950 rounded-2xl p-6 border border-neutral-900 mb-4 relative h-32 flex items-center justify-center">
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring"></div>
+          <div class="text-center">
+            <p id="progress-main-status" class="status-message text-amber-400 mb-2">Conectando IA...</p>
+            <p id="progress-substatus" class="text-[9px] text-neutral-600 font-semibold uppercase">Processando informações</p>
+          </div>
+        </div>
+
+        <div class="space-y-2 mb-4">
+          <div class="flex items-center gap-2">
+            <div id="step-1" class="w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-[10px] font-black">✓</div>
+            <span class="text-[10px] font-bold text-neutral-500">Estrutura do roteiro</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div id="step-2" class="w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-[10px] font-black">
+              <span class="loader" style="width:12px;height:12px;border-width:1.5px;border-top-color:var(--accent)"></span>
+            </div>
+            <span id="step-2-text" class="text-[10px] font-bold text-neutral-500">Gerando dias...</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div id="step-3" class="w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-[10px]">—</div>
+            <span class="text-[10px] font-bold text-neutral-500">Calculando distâncias</span>
+          </div>
+        </div>
+
+        <button type="button" onclick="cancelGeneration()" class="w-full text-[10px] font-black text-red-400 uppercase mt-4 py-3 border border-red-900 rounded-xl hover:bg-red-950/30 transition-colors">Cancelar geração</button>
       </div>
       <div id="gen-error" class="hidden text-[11px] font-bold text-red-400 bg-red-950/40 border border-red-900 rounded-xl p-3 leading-relaxed"></div>
     </div>
@@ -405,7 +497,7 @@ function startSplashAnimation(){
     c.appendChild(s);
   });
 }
-// ---------- ícones desenhados localmente (sem depender do CDN do lucide, que pode falhar/travar) ----------
+
 const ICONS = {
   building: '<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4h6v4M9 9h1M14 9h1M9 13h1M14 13h1"/>',
   car: '<path d="M4 17V12l2-5h12l2 5v5"/><path d="M2 17h2m16 0h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>',
@@ -446,9 +538,6 @@ function renderIconEl(el){
   svg.setAttribute('stroke-linecap','round');
   svg.setAttribute('stroke-linejoin','round');
   if(cleanStyle) svg.setAttribute('style', cleanStyle);
-  // preserva id, class e quaisquer outros atributos do elemento original (crítico:
-  // sem isso, elementos com id como #kpi-transport-icon "somem" após a primeira troca
-  // de ícone, e o código que os busca por getElementById quebra nas próximas atualizações).
   for(const attr of Array.from(el.attributes)){
     if(attr.name === 'data-lucide' || attr.name === 'style') continue;
     svg.setAttribute(attr.name, attr.value);
@@ -460,19 +549,19 @@ function renderIconEl(el){
 function safeIcons(){
   try{
     document.querySelectorAll('[data-lucide]').forEach(renderIconEl);
-  }catch(e){ console.error('[Roteiro.IA] Falha ao renderizar ícones (não crítico):', e); }
+  }catch(e){ console.error('[Roteiro.IA] Falha ao renderizar ícones:', e); }
 }
 
 startSplashAnimation();
 
-// ---------- storage universal: window.storage (preview no Claude.ai) ou localStorage (deploy real, ex. Vercel) ----------
+// ---------- storage universal ----------
 async function storageSet(key, value){
   try{
     if(window.storage && typeof window.storage.set === 'function'){
       await window.storage.set(key, value);
       return;
     }
-  }catch(e){ /* segue para fallback */ }
+  }catch(e){}
   try{ localStorage.setItem(key, value); }catch(e){ console.error('[Roteiro.IA] Falha ao salvar', key, e); }
 }
 async function storageGet(key){
@@ -481,17 +570,12 @@ async function storageGet(key){
       const r = await window.storage.get(key);
       return r ? r.value : null;
     }
-  }catch(e){ /* segue para fallback */ }
+  }catch(e){}
   try{ return localStorage.getItem(key); }catch(e){ return null; }
 }
 
 async function boot(){
   try{
-    const savedKey = await storageGet('gemini_api_key');
-    if(savedKey) document.getElementById('gemini-api-key').value = savedKey;
-  }catch(e){}
-  try{
-    // Escape hatch: abrir o site com ?reset=1 na URL sempre limpa qualquer viagem salva.
     if(new URLSearchParams(window.location.search).get('reset') === '1'){
       await storageSet('trip:current', '');
       window.itineraryData = [];
@@ -520,21 +604,14 @@ async function boot(){
         loadDashboard();
         loadDay(1);
       }catch(uiErr){
-        console.error('[Roteiro.IA] Viagem salva estava com dados incompatíveis, limpando:', uiErr);
+        console.error('[Roteiro.IA] Viagem incompatível, limpando:', uiErr);
         window.itineraryData = [];
         window.tripMeta = {};
         window.tripDistances = {};
         await storageSet('trip:current', '');
-        document.getElementById('app-header').classList.add('hidden');
-        document.getElementById('app-header').classList.remove('flex');
-        document.getElementById('top-tabs').classList.add('hidden');
-        document.getElementById('day-selector').classList.add('hidden');
-        document.getElementById('bottom-navigation').classList.add('hidden');
-        document.getElementById('edit-button').classList.add('hidden');
-        document.getElementById('new-trip-btn').classList.add('hidden');
       }
     }
-  }catch(e){ /* no saved trip yet */ }
+  }catch(e){}
   if(!window.itineraryData.length){
     autoFillOriginSilently();
   }
@@ -592,7 +669,8 @@ window.closeEditor = ()=>document.getElementById('input-screen').style.display='
 
 window.cancelGeneration = ()=>{
   window._cancelGeneration = true;
-  document.getElementById('progress-status').innerText = 'Cancelando...';
+  if(statusMessageInterval) clearInterval(statusMessageInterval);
+  document.getElementById('progress-main-status').innerText = 'Cancelado.';
 };
 
 async function resolveMyLocation(){
@@ -614,20 +692,19 @@ async function resolveMyLocation(){
 }
 
 function geoErrorMessage(err){
-  if(err.code === 1) return 'Permissão de localização negada. Se estiver testando dentro do preview do Claude, isso é esperado — abra o site publicado direto no navegador para usar essa função.';
+  if(err.code === 1) return 'Permissão de localização negada.';
   if(err.code === 2) return 'Não foi possível determinar sua posição agora.';
   if(err.code === 3) return 'A busca por localização demorou demais.';
   return 'Não foi possível obter sua localização: ' + (err.message || err);
 }
 
-// tenta preencher a origem automaticamente ao abrir o formulário, sem incomodar com erro se falhar
 async function autoFillOriginSilently(){
   const input = document.getElementById('user-origin');
   if(!input || input.value.trim()) return;
   try{
     input.value = await resolveMyLocation();
   }catch(e){
-    console.log('[Roteiro.IA] Auto-localização indisponível (normal se permissão não concedida):', e.message || e);
+    console.log('[Roteiro.IA] Auto-localização indisponível:', e.message || e);
   }
 }
 
@@ -660,7 +737,7 @@ function toast(msg, isError){
   setTimeout(()=>el.remove(), 3000);
 }
 
-// ---------- AI generation (Google Gemini API — funciona direto do navegador, arquivo único, compatível com Vercel) ----------
+// ---------- AI generation (Claude API via backend) ----------
 function dateList(start, end){
   const out = [];
   let d = new Date(start + 'T00:00:00');
@@ -694,39 +771,33 @@ Responda APENAS com um objeto JSON válido, no formato exato:
 {"title":"Dia ${dayIndex}: <tema do dia>","subtitle":"<bairro ou região>","weather":"<temperatura ex 24°C>","hotel":{"name":"<nome>","address":"<endereço>","lat":<numero>,"lng":<numero>},"timeline":[{"time":"08:00","duration":"1h30","desc":"<atividade curta>","price":"R$ <valor>","lat":<numero>,"lng":<numero>}],"meal":"R$ <valor>","ticket":"R$ <valor>","total":"R$ <valor>"}
 Use no mínimo 4 e no máximo 7 itens no timeline, todos em locais turísticos reais e reconhecidos do destino, com coordenadas geográficas reais (lat/lng) desses locais — nunca coordenadas aproximadas ou inventadas. Valores em Reais (BRL), realistas para o orçamento indicado.`;
 
-  const apiKey = (document.getElementById('gemini-api-key')?.value || '').trim() || (await storageGet('gemini_api_key') || '').trim();
-  if(!apiKey){
-    throw new Error('Cole sua chave da API Gemini no formulário (grátis em aistudio.google.com/apikey).');
-  }
-
   let res;
   try{
     res = await Promise.race([
-      fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`, {
+      fetch(`https://api.anthropic.com/v1/messages`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json" }
+          model: "claude-sonnet-4-6",
+          max_tokens: 1500,
+          messages: [{ role: "user", content: prompt }]
         })
       }),
-      new Promise((_, reject) => setTimeout(()=>reject(new Error('TIMEOUT')), 20000))
+      new Promise((_, reject) => setTimeout(()=>reject(new Error('TIMEOUT')), 30000))
     ]);
   }catch(networkErr){
-    if(networkErr.message === 'TIMEOUT') throw new Error('Tempo esgotado ao chamar a IA (20s).');
+    if(networkErr.message === 'TIMEOUT') throw new Error('Tempo esgotado ao chamar a IA (30s).');
     throw new Error('Falha de rede ao chamar a IA: ' + (networkErr.message || networkErr));
   }
 
   if(!res.ok){
     let detail = '';
     try{ detail = JSON.stringify(await res.json()); }catch(e){}
-    if(res.status === 400 || res.status === 403) throw new Error(`Chave da API Gemini inválida ou sem permissão (status ${res.status}). Confira a chave em aistudio.google.com/apikey.`);
-    if(res.status === 429) throw new Error('Limite de uso da API Gemini atingido no momento. Aguarde um pouco e tente de novo.');
-    throw new Error(`API retornou status ${res.status} ${detail}`);
+    throw new Error(`API retornou status ${res.status}. Detalhes: ${detail.slice(0,200)}`);
   }
 
   const data = await res.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = data.content?.[0]?.text;
   if(!text) throw new Error('Resposta da IA veio sem texto.');
 
   const clean = text.replace(/```json|```/g, '').trim();
@@ -739,6 +810,39 @@ Use no mínimo 4 e no máximo 7 itens no timeline, todos em locais turísticos r
   parsed.id = dayIndex;
   parsed.date = date;
   return parsed;
+}
+
+const statusMessages = [
+  'Conectando IA...',
+  'Analisando seu destino...',
+  'Buscando atrações...',
+  'Estruturando roteiro...',
+  'Calculando custos...',
+  'Refinando detalhes...',
+  'Quase pronto...'
+];
+
+let statusMessageIndex = 0;
+let statusMessageInterval = null;
+
+function cycleStatusMessages(){
+  const mainStatus = document.getElementById('progress-main-status');
+  const substatus = document.getElementById('progress-substatus');
+  if(!mainStatus) return;
+  
+  statusMessageIndex = (statusMessageIndex + 1) % statusMessages.length;
+  mainStatus.innerText = statusMessages[statusMessageIndex];
+  
+  const substats = [
+    'Processando informações',
+    'Validando dados',
+    'Conectando ao servidor',
+    'Gerando conteúdo',
+    'Organizando informações',
+    'Finalizando roteiro',
+    'Salvando dados'
+  ];
+  substatus.innerText = substats[statusMessageIndex];
 }
 
 window.generateItinerary = async ()=>{
@@ -756,12 +860,6 @@ window.generateItinerary = async ()=>{
     toast('A data de volta precisa ser depois da ida.', true);
     return;
   }
-  const apiKeyValue = document.getElementById('gemini-api-key').value.trim();
-  if(!apiKeyValue){
-    toast('Cole sua chave da API Gemini antes de gerar (grátis em aistudio.google.com/apikey).', true);
-    return;
-  }
-  await storageSet('gemini_api_key', apiKeyValue);
 
   const dates = dateList(startDate, endDate);
   console.log('[Roteiro.IA] Gerando', dates.length, 'dias:', dates);
@@ -769,12 +867,21 @@ window.generateItinerary = async ()=>{
   const btn = document.getElementById('gen-btn');
   const progressWrap = document.getElementById('gen-progress');
   const errorBanner = document.getElementById('gen-error');
-  const statusEl = document.getElementById('progress-status');
+  const progressLabel = document.getElementById('progress-label');
+  const progressPct = document.getElementById('progress-pct');
+  const progressFill = document.getElementById('progress-fill');
+  const step2Text = document.getElementById('step-2-text');
+  
   errorBanner.classList.add('hidden');
   btn.disabled = true;
   btn.innerText = 'Gerando...';
   progressWrap.classList.remove('hidden');
   window._cancelGeneration = false;
+  statusMessageIndex = 0;
+  
+  // Inicia ciclo de mensagens de status
+  cycleStatusMessages();
+  statusMessageInterval = setInterval(cycleStatusMessages, 2000);
 
   try{
     const ctx = { origin, destination, tier: window.selectedTier, acc: window.selectedAcc, transport: window.selectedTransport, extra: extraQuery };
@@ -784,34 +891,31 @@ window.generateItinerary = async ()=>{
 
     for(let i=0; i<dates.length; i++){
       if(window._cancelGeneration){
-        statusEl.innerText = 'Geração cancelada.';
+        clearInterval(statusMessageInterval);
         break;
       }
-      document.getElementById('progress-label').innerText = `Gerando dia ${i+1} de ${dates.length}...`;
-      document.getElementById('progress-pct').innerText = `${Math.round((i/dates.length)*100)}%`;
-      document.getElementById('progress-fill').style.width = `${Math.round((i/dates.length)*100)}%`;
-      statusEl.innerText = 'Chamando a IA...';
+      
+      const progress = Math.round(((i+0.5)/dates.length)*100);
+      progressLabel.innerText = `Gerando dia ${i+1} de ${dates.length}...`;
+      progressPct.innerText = `${progress}%`;
+      progressFill.style.width = `${progress}%`;
+      step2Text.innerText = `Gerando dias... (${i+1}/${dates.length})`;
 
       let dayData = null;
       let lastError = null;
       for(let attempt=0; attempt<2 && !dayData && !window._cancelGeneration; attempt++){
         try{
-          statusEl.innerText = attempt === 0 ? 'Chamando a IA...' : 'Tentando de novo...';
           console.log(`[Roteiro.IA] Dia ${i+1}, tentativa ${attempt+1}`);
           dayData = await callClaudeForDay(i+1, dates.length, dates[i], ctx, prevSummary);
           console.log(`[Roteiro.IA] Dia ${i+1} OK`, dayData);
-          statusEl.innerText = `Dia ${i+1} gerado.`;
         }catch(e){
           lastError = e;
           console.error(`[Roteiro.IA] Dia ${i+1} falhou (tentativa ${attempt+1}):`, e);
-          statusEl.innerText = `Dia ${i+1} falhou: ${e.message || e}`;
-          if(attempt < 1) await new Promise(r=>setTimeout(r, 700));
+          if(attempt < 1) await new Promise(r=>setTimeout(r, 1000));
         }
       }
       if(window._cancelGeneration) break;
 
-      // se o dia 1 falhar de cara, provavelmente é problema de configuração (chave/endpoint) —
-      // não faz sentido insistir em mais 13 dias, então para e mostra o erro real na hora.
       if(!dayData && i === 0){
         throw lastError || new Error('Falha ao gerar o primeiro dia.');
       }
@@ -833,25 +937,46 @@ window.generateItinerary = async ()=>{
     }
 
     if(window._cancelGeneration || newItinerary.length === 0){
+      clearInterval(statusMessageInterval);
       progressWrap.classList.add('hidden');
       btn.disabled = false;
       btn.innerText = 'Gerar roteiro';
       return;
     }
 
-    document.getElementById('progress-fill').style.width = '100%';
-    document.getElementById('progress-pct').innerText = '100%';
+    // Step 3: calculando distâncias
+    document.getElementById('step-2').innerHTML = '<span class="text-emerald-500">✓</span>';
+    document.getElementById('step-2').className = 'w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-600 flex items-center justify-center text-[10px] font-black';
+    document.getElementById('step-3').innerHTML = '<span class="loader" style="width:12px;height:12px;border-width:1.5px;border-top-color:var(--accent)"></span>';
+    document.getElementById('step-3').className = 'w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center';
+    
+    const step3Text = document.querySelector('div:has(#step-3) + span');
+    if(step3Text) step3Text.textContent = 'Calculando distâncias...';
+
+    progressLabel.innerText = `Finalizando roteiro...`;
+    progressFill.style.width = '95%';
+    progressPct.innerText = '95%';
 
     window.itineraryData = newItinerary;
     window.tripMeta = { origin, destination, startDate, endDate, tier: window.selectedTier, acc: window.selectedAcc, transport: window.selectedTransport };
     window.tripDistances = {};
 
-    // pré-calcula distâncias de cada dia para o dashboard (não bloqueia se falhar)
     for(const day of newItinerary){
       try{ await precomputeDistance(day); }catch(e){ console.error('Erro ao calcular distância', e); }
     }
 
     await persistTrip();
+
+    // Completa
+    document.getElementById('step-3').innerHTML = '<span class="text-emerald-500">✓</span>';
+    document.getElementById('step-3').className = 'w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-600 flex items-center justify-center text-[10px] font-black';
+    
+    progressFill.style.width = '100%';
+    progressPct.innerText = '100%';
+    progressLabel.innerText = `Roteiro completo!`;
+    
+    clearInterval(statusMessageInterval);
+    await new Promise(r => setTimeout(r, 800));
 
     showAppUI();
     loadDashboard();
@@ -859,19 +984,21 @@ window.generateItinerary = async ()=>{
     document.getElementById('close-editor-btn').classList.add('hidden');
 
     if(failedDays === 0){
-      toast('Roteiro gerado com sucesso.');
+      toast('✨ Roteiro gerado com sucesso!');
     } else {
-      toast(`Roteiro gerado com ${failedDays} dia(s) indisponível(is). Veja o console para detalhes.`, true);
+      toast(`Roteiro gerado com ${failedDays} dia(s) indisponível(is).`, true);
     }
   }catch(err){
+    clearInterval(statusMessageInterval);
     console.error('[Roteiro.IA] Erro fatal ao gerar roteiro:', err);
-    errorBanner.innerText = `Erro ao gerar roteiro: ${err.message || err}. Veja o console (F12) para detalhes.`;
+    errorBanner.innerText = `Erro ao gerar roteiro: ${err.message || err}. Verifique sua conexão de internet.`;
     errorBanner.classList.remove('hidden');
-    toast('Falha ao gerar roteiro. Veja a mensagem abaixo do botão.', true);
+    toast('Falha ao gerar roteiro.', true);
   }finally{
+    clearInterval(statusMessageInterval);
     btn.disabled = false;
     btn.innerText = 'Gerar roteiro';
-    progressWrap.classList.add('hidden');
+    setTimeout(()=>progressWrap.classList.add('hidden'), 1000);
   }
 };
 
@@ -1020,7 +1147,7 @@ function loadDay(id){
   safeIcons();
 }
 
-// ---------- mini map (mapa por dia dentro da aba Roteiro) ----------
+// ---------- mini map ----------
 let miniMap = null, miniPolyline = null, miniMarkers = [];
 async function renderMiniMap(data){
   const el = document.getElementById('mini-map');
