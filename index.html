@@ -774,14 +774,10 @@ Use no mínimo 4 e no máximo 7 itens no timeline, todos em locais turísticos r
   let res;
   try{
     res = await Promise.race([
-      fetch(`https://api.anthropic.com/v1/messages`, {
+      fetch(`/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1500,
-          messages: [{ role: "user", content: prompt }]
-        })
+        body: JSON.stringify({ prompt })
       }),
       new Promise((_, reject) => setTimeout(()=>reject(new Error('TIMEOUT')), 30000))
     ]);
