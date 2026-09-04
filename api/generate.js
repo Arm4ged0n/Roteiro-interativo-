@@ -3,11 +3,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 👇 COLOQUE A SUA CHAVE DO GOOGLE AI STUDIO ENTRE AS ASPAS ABAIXO 👇
-  const apiKey = "COLE_A_SUA_CHAVE_AQUI";
+  // O código procura a chave no cofre seguro do Vercel
+  const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey || apiKey === "COLE_A_SUA_CHAVE_AQUI") {
-    return res.status(500).json({ error: 'Esqueceu-se de colocar a chave no arquivo generate.js' });
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Chave da API não encontrada no Vercel' });
   }
 
   try {
