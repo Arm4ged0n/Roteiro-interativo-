@@ -1,3 +1,6 @@
+// ISTO RESOLVE O PROBLEMA: Aumenta o limite de tempo do Vercel de 10s para 60s
+export const maxDuration = 60; 
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -10,7 +13,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // CORREÇÃO: Utilizando a versão correta do modelo (gemini-1.5-flash)
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
