@@ -451,9 +451,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 
 </div>
 <script>
-// A chave da API deve estar no escopo global para o ambiente a injetar corretamente
-const apiKey = ""; 
-
 window.itineraryData = [];
 window.tripMeta = {};
 window.tripDistances = {};
@@ -665,7 +662,6 @@ function toast(msg, isError){
   setTimeout(()=>el.remove(), 3000);
 }
 
-// ---------- AI generation (Gemini API Direto) ----------
 function dateList(start, end){
   const out = [];
   let d = new Date(start + 'T00:00:00');
@@ -677,10 +673,8 @@ function dateList(start, end){
   return out;
 }
 
-// INTEGRAÇÃO GEMINI NATIVA COM EXPONENTIAL BACKOFF
+// INTEGRAÇÃO COM O BACKEND (VERCEL API) 
 async function callAIForDay(dayIndex, totalDays, date, ctx, prevSummary){
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
   const transportLabel = ctx.transport === 'carro' ? 'carro' : 'avião';
   let startInstruction = '';
   if(dayIndex === 1){
@@ -703,31 +697,29 @@ Responda APENAS com um objeto JSON válido, no formato exato a seguir. Não insi
 {"title":"Dia ${dayIndex}: <tema do dia>","subtitle":"<bairro ou região>","weather":"<temperatura ex 24°C>","hotel":{"name":"<nome>","address":"<morada>","lat":<numero>,"lng":<numero>},"timeline":[{"time":"08:00","duration":"1h30","desc":"<atividade curta>","price":"€ <valor>","lat":<numero>,"lng":<numero>}],"meal":"€ <valor>","ticket":"€ <valor>","total":"€ <valor>"}
 Use no mínimo 4 e no máximo 7 itens na timeline. Valores em Euros (€).`;
 
-  const payload = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      responseMimeType: "application/json" 
-    }
-  };
-
+  const payload = { prompt };
   const delays = [1000, 2000, 4000, 8000, 16000];
   let res, jsonResult, lastErr;
 
   for (let i = 0; i < delays.length; i++) {
     try {
-        res = await fetch(url, {
+        // Agora faz o pedido à NOSSA própria API no Vercel de forma segura
+        res = await fetch('/api/generate', {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        
         jsonResult = await res.json();
+        
+        if (!res.ok) throw new Error(jsonResult.error || `HTTP error ${res.status}`);
+        
         lastErr = null;
-        break; // Sucesso, sai do loop de tentativas
+        break; // Sucesso, sai do loop
     } catch (error) {
         lastErr = error;
         if (i < delays.length - 1) {
-            await new Promise(r => setTimeout(r, delays[i])); // Exponential backoff
+            await new Promise(r => setTimeout(r, delays[i])); 
         }
     }
   }
@@ -886,7 +878,6 @@ window.generateItinerary = async ()=>{
     document.getElementById('step-3').innerHTML = '<span class="loader" style="width:12px;height:12px;border-width:1.5px;border-top-color:var(--accent)"></span>';
     document.getElementById('step-3').className = 'w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center';
     
-    // CORREÇÃO: Substituição de querySelector(':has') que causava erros (SyntaxError) em browsers um pouco mais antigos.
     const step3Text = document.getElementById('step-3-text');
     if(step3Text) step3Text.textContent = 'A calcular distâncias...';
 
@@ -927,7 +918,7 @@ window.generateItinerary = async ()=>{
   }catch(err){
     clearInterval(statusMessageInterval);
     console.error('[Roteiro.IA] Erro fatal:', err);
-    errorBanner.innerText = `Erro ao gerar roteiro: ${err.message || err}. Verifique a sua ligação.`;
+    errorBanner.innerText = `Erro ao gerar roteiro: ${err.message || err}.`;
     errorBanner.classList.remove('hidden');
     toast('Falha ao gerar roteiro.', true);
   }finally{
