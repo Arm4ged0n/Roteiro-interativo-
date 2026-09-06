@@ -128,7 +128,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 
 .timeline-dot{position:absolute;left:-33px;width:14px;height:14px;background:var(--accent);border-radius:50%;border:4px solid #000}
 
-/* ---- loading animations ---- */
 .pulse-ring{
   position:absolute;
   width:60px;
@@ -195,6 +194,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 
     <div class="space-y-5">
       <div>
+        <!-- Campo para inserir a Chave da API diretamente e evitar falhas de servidor -->
+        <label class="eyebrow text-emerald-400 mb-2 block">Chave de API do Gemini (Google AI Studio)</label>
+        <input type="password" id="user-api-key" class="w-full bg-black border-2 border-neutral-900 rounded-2xl py-4 px-5 text-white mb-4 focus:border-emerald-400 outline-none mono text-sm" placeholder="Cole aqui a sua chave (começa por AIza...)">
+
         <label class="eyebrow text-amber-400 mb-2 block">Origem <span class="text-neutral-600 normal-case font-semibold">(ponto de partida se for de carro)</span></label>
         <div class="flex gap-2 mb-4">
           <input type="text" id="user-origin" class="flex-1 min-w-0 bg-black border-2 border-neutral-900 rounded-2xl py-4 px-5 text-white focus:border-amber-400 outline-none" placeholder="Ex: Lisboa, PT">
@@ -219,7 +222,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 
         <label class="eyebrow text-neutral-500 mb-2 block">Preferências (opcional)</label>
         <textarea id="user-query" class="w-full bg-black border-2 border-neutral-900 rounded-2xl p-5 text-white h-20 focus:border-amber-400 outline-none" placeholder="Pontos turísticos, ritmo da viagem, restrições..."></textarea>
-        <p class="text-[10px] text-neutral-600 font-semibold mt-2 leading-relaxed">Dica: para especificar o que fazer em cada dia, descreva assim: "Dia 1: cidade histórica. Dia 2: praia. Dia 3: trilha." — a IA segue a descrição à risca.</p>
       </div>
 
       <div>
@@ -237,7 +239,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
           <button onclick="setTransport('carro')" id="tr-carro" class="acc-btn"><span class="acc-icon"><i data-lucide="car"></i></span>Carro</button>
           <button onclick="setTransport('aviao')" id="tr-aviao" class="acc-btn active"><span class="acc-icon"><i data-lucide="plane"></i></span>Avião</button>
         </div>
-        <p class="text-[10px] text-neutral-600 font-semibold mt-2 leading-relaxed">De carro, o roteiro parte do endereço de origem. De avião, parte do aeroporto mais próximo do destino.</p>
       </div>
 
       <div>
@@ -270,23 +271,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
           <div class="text-center">
             <p id="progress-main-status" class="status-message text-amber-400 mb-2">A ligar à IA...</p>
             <p id="progress-substatus" class="text-[9px] text-neutral-600 font-semibold uppercase">A processar informações</p>
-          </div>
-        </div>
-
-        <div class="space-y-2 mb-4">
-          <div class="flex items-center gap-2">
-            <div id="step-1" class="w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-[10px] font-black">✓</div>
-            <span class="text-[10px] font-bold text-neutral-500">Estrutura do roteiro</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div id="step-2" class="w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-[10px] font-black">
-              <span class="loader" style="width:12px;height:12px;border-width:1.5px;border-top-color:var(--accent)"></span>
-            </div>
-            <span id="step-2-text" class="text-[10px] font-bold text-neutral-500">A gerar dias...</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div id="step-3" class="w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-[10px]">—</div>
-            <span id="step-3-text" class="text-[10px] font-bold text-neutral-500">A calcular distâncias</span>
           </div>
         </div>
 
@@ -329,7 +313,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 <div class="day-carousel hidden" id="day-selector"></div>
 
 <div class="main-container">
-
   <!-- DASHBOARD -->
   <section id="dashboard-view" class="view-section hide">
     <div class="mb-6">
@@ -460,12 +443,10 @@ window.selectedTier = 'standard';
 window.selectedAcc = 'hotel';
 window.selectedTransport = 'aviao';
 
-// Substituindo localStorage para prevenir bloqueios de segurança do ambiente
 const memStorage = {};
 async function storageSet(key, value){ memStorage[key] = value; }
 async function storageGet(key){ return memStorage[key] || null; }
 
-// ---------- boot ----------
 function startSplashAnimation(){
   const c = document.getElementById('animated-logo');
   const text = "Roteiro.IA";
@@ -531,15 +512,12 @@ function renderIconEl(el){
 function safeIcons(){
   try{
     document.querySelectorAll('[data-lucide]').forEach(renderIconEl);
-  }catch(e){ console.error('[Roteiro.IA] Falha ao renderizar ícones:', e); }
+  }catch(e){ console.error('Falha ao renderizar ícones:', e); }
 }
 
 startSplashAnimation();
 
 async function boot(){
-  if(!window.itineraryData.length){
-    autoFillOriginSilently();
-  }
   setTimeout(()=>{
     document.getElementById('splash').style.opacity = '0';
     setTimeout(()=>document.getElementById('splash').style.display='none', 500);
@@ -568,7 +546,6 @@ function initMap(){
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 }
 
-// ---------- form controls ----------
 window.setTier = (t)=>{
   window.selectedTier = t;
   document.querySelectorAll('.choice-btn').forEach(b=>b.classList.remove('active'));
@@ -594,12 +571,11 @@ window.closeEditor = ()=>document.getElementById('input-screen').style.display='
 
 window.cancelGeneration = ()=>{
   window._cancelGeneration = true;
-  if(statusMessageInterval) clearInterval(statusMessageInterval);
   document.getElementById('progress-main-status').innerText = 'Cancelado.';
 };
 
 async function resolveMyLocation(){
-  if(!navigator.geolocation) throw new Error('Geolocalização não suportada neste navegador.');
+  if(!navigator.geolocation) throw new Error('Geolocalização não suportada.');
   const pos = await new Promise((resolve, reject)=>{
     navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy:true, timeout:10000 });
   });
@@ -616,23 +592,6 @@ async function resolveMyLocation(){
   }
 }
 
-function geoErrorMessage(err){
-  if(err.code === 1) return 'Permissão de localização negada.';
-  if(err.code === 2) return 'Não foi possível determinar a sua posição agora.';
-  if(err.code === 3) return 'A busca por localização demorou demais.';
-  return 'Não foi possível obter a sua localização: ' + (err.message || err);
-}
-
-async function autoFillOriginSilently(){
-  const input = document.getElementById('user-origin');
-  if(!input || input.value.trim()) return;
-  try{
-    input.value = await resolveMyLocation();
-  }catch(e){
-    console.log('[Roteiro.IA] Auto-localização indisponível:', e.message || e);
-  }
-}
-
 window.useMyLocation = async ()=>{
   const btn = document.getElementById('use-location-btn');
   btn.disabled = true;
@@ -641,12 +600,13 @@ window.useMyLocation = async ()=>{
     document.getElementById('user-origin').value = await resolveMyLocation();
     toast('Localização atual adicionada.');
   }catch(e){
-    toast(geoErrorMessage(e), true);
+    toast('Não foi possível obter a localização.', true);
   }finally{
     btn.disabled = false;
     btn.style.opacity = '1';
   }
 };
+
 window.newTrip = async ()=>{
   if(!confirm('Começar uma nova viagem? O roteiro atual será substituído.')) return;
   document.getElementById('close-editor-btn').classList.remove('hidden');
@@ -673,256 +633,126 @@ function dateList(start, end){
   return out;
 }
 
-// INTEGRAÇÃO COM O BACKEND (VERCEL API) 
-async function callAIForDay(dayIndex, totalDays, date, ctx, prevSummary){
+// INTEGRAÇÃO DIRETA AO GEMINI VIA CLIENT-SIDE (Evita erros 404 de backend)
+async function callAIForDay(dayIndex, totalDays, date, ctx, prevSummary, apiKey){
   const transportLabel = ctx.transport === 'carro' ? 'carro' : 'avião';
   let startInstruction = '';
   if(dayIndex === 1){
     if(ctx.transport === 'carro'){
-      startInstruction = `O transporte da viagem é de CARRO. O primeiro item da timeline deste dia deve ser a partida do local de origem informado: "${ctx.origin || 'origem informada pelo usuário'}", com horário de saída e coordenadas (lat/lng) aproximadas desse local de origem. Os itens seguintes seguem o trajeto até o destino ou já pelo destino, conforme a distância.`;
+      startInstruction = `O transporte da viagem é de CARRO. O primeiro item da timeline deste dia deve ser a partida do local de origem informado: "${ctx.origin || 'origem'}".`;
     } else {
-      startInstruction = `O transporte da viagem é de AVIÃO. O primeiro item da timeline deste dia deve ser a chegada no aeroporto real mais próximo de ${ctx.destination} (use o nome oficial do aeroporto), com horário de chegada e coordenadas reais (lat/lng) desse aeroporto. Os itens seguintes acontecem a partir da saída do aeroporto.`;
+      startInstruction = `O transporte da viagem é de AVIÃO. O primeiro item da timeline deste dia deve ser a chegada no aeroporto real mais próximo de ${ctx.destination}.`;
     }
   }
   
-  const prompt = `Você é um planejador de viagens especialista, com profundo conhecimento dos melhores pontos turísticos, atrações e experiências do mundo. Gere o roteiro do DIA ${dayIndex} de ${totalDays} de uma viagem.
-Contexto da viagem: origem ${ctx.origin || 'não especificada'}, destino ${ctx.destination}, transporte: ${transportLabel}, data deste dia: ${date}, orçamento: ${ctx.tier}, alojamento: ${ctx.acc}.
-Preferências do utilizador: "${ctx.extra || 'nenhuma'}"
-IMPORTANTE: se as preferências mencionarem um dia específico (ex: "dia ${dayIndex}:", "no ${dayIndex}º dia"), deve seguir essa instrução para montar exatamente o tema e as atividades deste dia. Ignore menções a outros dias que não sejam o dia ${dayIndex}.
-PONTOS TURÍSTICOS: priorize atrações reais, famosas e bem avaliadas do destino. Evite lugares genéricos; use nomes reais e coordenadas geográficas (lat/lng) verdadeiras desses locais.
-DURAÇÃO: para cada item, estime quanto tempo leva (ex: "45min", "1h30") no campo "duration".
-${startInstruction}
-${prevSummary ? 'Resumo do dia anterior (para manter continuidade e não repetir atrações): ' + prevSummary : ''}
-Responda APENAS com um objeto JSON válido, no formato exato a seguir. Não insira formatação markdown (\`\`\`json).
-{"title":"Dia ${dayIndex}: <tema do dia>","subtitle":"<bairro ou região>","weather":"<temperatura ex 24°C>","hotel":{"name":"<nome>","address":"<morada>","lat":<numero>,"lng":<numero>},"timeline":[{"time":"08:00","duration":"1h30","desc":"<atividade curta>","price":"€ <valor>","lat":<numero>,"lng":<numero>}],"meal":"€ <valor>","ticket":"€ <valor>","total":"€ <valor>"}
-Use no mínimo 4 e no máximo 7 itens na timeline. Valores em Euros (€).`;
+  const prompt = `Você é um planejador de viagens especialista. Gere o roteiro do DIA ${dayIndex} de ${totalDays} de uma viagem.
+Contexto: origem ${ctx.origin || 'não especificada'}, destino ${ctx.destination}, transporte: ${transportLabel}, data: ${date}, orçamento: ${ctx.tier}, alojamento: ${ctx.acc}.
+Preferências: "${ctx.extra || 'nenhuma'}"
+Responda APENAS com um objeto JSON válido, sem formatação markdown (sem \`\`\`json).
+{"title":"Dia ${dayIndex}: <tema>","subtitle":"<região>","weather":"<ex 24°C>","hotel":{"name":"<nome>","address":"<morada>","lat":<numero>,"lng":<numero>},"timeline":[{"time":"08:00","duration":"1h30","desc":"<atividade>","price":"€ <valor>","lat":<numero>,"lng":<numero>}],"meal":"€ <valor>","ticket":"€ <valor>","total":"€ <valor>"}
+Use de 4 a 6 itens na timeline. Valores em Euros (€).`;
 
-  const payload = { prompt };
-  const delays = [1000, 2000, 4000, 8000, 16000];
-  let res, jsonResult, lastErr;
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: "application/json" }
+    })
+  });
 
-  for (let i = 0; i < delays.length; i++) {
-    try {
-        // Agora faz o pedido à NOSSA própria API no Vercel de forma segura
-        res = await fetch('/api/generate', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        
-        jsonResult = await res.json();
-        
-        if (!res.ok) throw new Error(jsonResult.error || `HTTP error ${res.status}`);
-        
-        lastErr = null;
-        break; // Sucesso, sai do loop
-    } catch (error) {
-        lastErr = error;
-        if (i < delays.length - 1) {
-            await new Promise(r => setTimeout(r, delays[i])); 
-        }
-    }
-  }
+  const data = await response.json();
+  if(!response.ok) throw new Error(data.error?.message || 'Erro na API do Gemini');
 
-  if (lastErr) throw new Error(`Falha de rede ao ligar à IA: ${lastErr.message || lastErr}`);
-  
-  if (jsonResult.candidates?.[0]?.finishReason === 'SAFETY') {
-      throw new Error("A IA bloqueou a geração por razões de segurança (conteúdo sensível).");
-  }
-
-  const text = jsonResult.candidates?.[0]?.content?.parts?.[0]?.text;
-  if(!text) throw new Error('A resposta da IA veio sem texto válido.');
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(!text) throw new Error('A resposta da IA veio vazia.');
 
   const clean = text.replace(/```json|```/g, '').trim();
-  let parsed;
-  try{
-    parsed = JSON.parse(clean);
-  }catch(parseErr){
-    throw new Error('JSON inválido retornado pela IA.');
-  }
+  const parsed = JSON.parse(clean);
   parsed.id = dayIndex;
   parsed.date = date;
   return parsed;
 }
 
-const statusMessages = [
-  'A ligar à IA...',
-  'A analisar o seu destino...',
-  'A procurar atrações...',
-  'A estruturar o roteiro...',
-  'A calcular custos...',
-  'A refinar detalhes...',
-  'Quase pronto...'
-];
-
-let statusMessageIndex = 0;
-let statusMessageInterval = null;
-
-function cycleStatusMessages(){
-  const mainStatus = document.getElementById('progress-main-status');
-  const substatus = document.getElementById('progress-substatus');
-  if(!mainStatus) return;
-  
-  statusMessageIndex = (statusMessageIndex + 1) % statusMessages.length;
-  mainStatus.innerText = statusMessages[statusMessageIndex];
-  
-  const substats = [
-    'A processar informações',
-    'A validar dados',
-    'A ligar ao servidor',
-    'A gerar conteúdo',
-    'A organizar informações',
-    'A finalizar roteiro',
-    'A guardar dados'
-  ];
-  substatus.innerText = substats[statusMessageIndex];
-}
-
 window.generateItinerary = async ()=>{
+  const apiKey = document.getElementById('user-api-key').value.trim();
   const origin = document.getElementById('user-origin').value;
   const destination = document.getElementById('user-destination').value;
   const startDate = document.getElementById('trip-start').value;
   const endDate = document.getElementById('trip-end').value;
   const extraQuery = document.getElementById('user-query').value;
 
+  if(!apiKey){
+    toast('Insira a sua chave de API do Gemini.', true);
+    return;
+  }
   if(!destination || !startDate || !endDate){
     toast('Preencha o destino e as datas.', true);
     return;
   }
-  if(endDate < startDate){
-    toast('A data de regresso precisa de ser depois da ida.', true);
-    return;
-  }
 
   const dates = dateList(startDate, endDate);
-  console.log('[Roteiro.IA] A gerar', dates.length, 'dias:', dates);
-
   const btn = document.getElementById('gen-btn');
   const progressWrap = document.getElementById('gen-progress');
   const errorBanner = document.getElementById('gen-error');
   const progressLabel = document.getElementById('progress-label');
   const progressPct = document.getElementById('progress-pct');
   const progressFill = document.getElementById('progress-fill');
-  const step2Text = document.getElementById('step-2-text');
   
   errorBanner.classList.add('hidden');
   btn.disabled = true;
   btn.innerText = 'A gerar...';
   progressWrap.classList.remove('hidden');
   window._cancelGeneration = false;
-  statusMessageIndex = 0;
-  
-  cycleStatusMessages();
-  statusMessageInterval = setInterval(cycleStatusMessages, 2000);
 
   try{
     const ctx = { origin, destination, tier: window.selectedTier, acc: window.selectedAcc, transport: window.selectedTransport, extra: extraQuery };
     const newItinerary = [];
     let prevSummary = '';
-    let failedDays = 0;
 
     for(let i=0; i<dates.length; i++){
-      if(window._cancelGeneration){
-        clearInterval(statusMessageInterval);
-        break;
-      }
+      if(window._cancelGeneration) break;
       
       const progress = Math.round(((i+0.5)/dates.length)*100);
       progressLabel.innerText = `A gerar dia ${i+1} de ${dates.length}...`;
       progressPct.innerText = `${progress}%`;
       progressFill.style.width = `${progress}%`;
-      step2Text.innerText = `A gerar dias... (${i+1}/${dates.length})`;
 
-      let dayData = null;
-      let lastError = null;
-      for(let attempt=0; attempt<2 && !dayData && !window._cancelGeneration; attempt++){
-        try{
-          dayData = await callAIForDay(i+1, dates.length, dates[i], ctx, prevSummary);
-        }catch(e){
-          lastError = e;
-          if(attempt < 1) await new Promise(r=>setTimeout(r, 1000));
-        }
-      }
-      if(window._cancelGeneration) break;
-
-      if(!dayData && i === 0){
-        throw lastError || new Error('Falha ao gerar o primeiro dia.');
-      }
-
-      if(!dayData){
-        failedDays++;
-        dayData = {
-          id: i+1, date: dates[i],
-          title: `Dia ${i+1}: não foi possível gerar`,
-          subtitle: destination,
-          weather: '--°C',
-          hotel: { name: '—', address: '—', lat: 0, lng: 0 },
-          timeline: [], meal: '€ 0', ticket: '€ 0', total: '€ 0',
-          _error: lastError ? String(lastError.message || lastError) : 'erro desconhecido'
-        };
-      }
+      const dayData = await callAIForDay(i+1, dates.length, dates[i], ctx, prevSummary, apiKey);
       newItinerary.push(dayData);
       prevSummary = `${dayData.title} — ${dayData.subtitle}`;
     }
 
     if(window._cancelGeneration || newItinerary.length === 0){
-      clearInterval(statusMessageInterval);
       progressWrap.classList.add('hidden');
       btn.disabled = false;
       btn.innerText = 'Gerar roteiro';
       return;
     }
 
-    document.getElementById('step-2').innerHTML = '<span class="text-emerald-500">✓</span>';
-    document.getElementById('step-2').className = 'w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-600 flex items-center justify-center text-[10px] font-black';
-    document.getElementById('step-3').innerHTML = '<span class="loader" style="width:12px;height:12px;border-width:1.5px;border-top-color:var(--accent)"></span>';
-    document.getElementById('step-3').className = 'w-5 h-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center';
-    
-    const step3Text = document.getElementById('step-3-text');
-    if(step3Text) step3Text.textContent = 'A calcular distâncias...';
-
-    progressLabel.innerText = `A finalizar roteiro...`;
-    progressFill.style.width = '95%';
-    progressPct.innerText = '95%';
+    progressFill.style.width = '100%';
+    progressPct.innerText = '100%';
 
     window.itineraryData = newItinerary;
     window.tripMeta = { origin, destination, startDate, endDate, tier: window.selectedTier, acc: window.selectedAcc, transport: window.selectedTransport };
     window.tripDistances = {};
 
     for(const day of newItinerary){
-      try{ await precomputeDistance(day); }catch(e){ console.error('Erro ao calcular distância', e); }
+      try{ await precomputeDistance(day); }catch(e){}
     }
 
     await persistTrip();
-
-    document.getElementById('step-3').innerHTML = '<span class="text-emerald-500">✓</span>';
-    document.getElementById('step-3').className = 'w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-600 flex items-center justify-center text-[10px] font-black';
-    
-    progressFill.style.width = '100%';
-    progressPct.innerText = '100%';
-    progressLabel.innerText = `Roteiro completo!`;
-    
-    clearInterval(statusMessageInterval);
-    await new Promise(r => setTimeout(r, 800));
-
     showAppUI();
     loadDashboard();
     loadDay(1);
     document.getElementById('close-editor-btn').classList.add('hidden');
-
-    if(failedDays === 0){
-      toast('✨ Roteiro gerado com sucesso!');
-    } else {
-      toast(`Roteiro gerado com ${failedDays} dia(s) indisponível(is).`, true);
-    }
+    toast('✨ Roteiro gerado com sucesso!');
   }catch(err){
-    clearInterval(statusMessageInterval);
-    console.error('[Roteiro.IA] Erro fatal:', err);
+    console.error('Erro fatal:', err);
     errorBanner.innerText = `Erro ao gerar roteiro: ${err.message || err}.`;
     errorBanner.classList.remove('hidden');
     toast('Falha ao gerar roteiro.', true);
   }finally{
-    clearInterval(statusMessageInterval);
     btn.disabled = false;
     btn.innerText = 'Gerar roteiro';
     setTimeout(()=>progressWrap.classList.add('hidden'), 1000);
@@ -936,7 +766,7 @@ async function persistTrip(){
       itinerary: window.itineraryData,
       distances: window.tripDistances
     }));
-  }catch(e){ console.error('Erro ao guardar viagem', e); }
+  }catch(e){}
 }
 
 function dayCoords(day){
@@ -961,7 +791,6 @@ async function precomputeDistance(day){
   }catch(e){ window.tripDistances[day.id] = 0; }
 }
 
-// ---------- dashboard ----------
 function parseCurrency(str){
   if(!str) return 0;
   const n = parseFloat(String(str).replace(/[^\d,.-]/g,'').replace('.', '').replace(',', '.'));
@@ -974,11 +803,7 @@ function loadDashboard(){
   document.getElementById('dash-title').innerText = `${window.itineraryData.length} dias em ${meta.destination || ''}`;
   document.getElementById('kpi-days').innerText = window.itineraryData.length;
   document.getElementById('kpi-acc').innerText = (meta.acc || '--').replace(/^\w/, c=>c.toUpperCase());
-  const transportLabel = meta.transport === 'carro' ? 'Carro' : 'Avião';
-  document.getElementById('kpi-transport').innerText = transportLabel;
-  const iconEl = document.getElementById('kpi-transport-icon');
-  if(iconEl) iconEl.setAttribute('data-lucide', meta.transport === 'carro' ? 'car' : 'plane');
-  safeIcons();
+  document.getElementById('kpi-transport').innerText = meta.transport === 'carro' ? 'Carro' : 'Avião';
 
   let totalCost = 0;
   window.itineraryData.forEach(d => totalCost += parseCurrency(d.total));
@@ -1022,7 +847,6 @@ function loadDashboard(){
   });
 }
 
-// ---------- day picker / itinerary ----------
 function generateDayPicker(){
   const container = document.getElementById('day-selector');
   container.innerHTML = '';
@@ -1070,89 +894,9 @@ function loadDay(id){
   });
 
   if(map) updateMapRoute(data);
-  renderMiniMap(data);
   safeIcons();
 }
 
-// ---------- mini map ----------
-let miniMap = null, miniPolyline = null, miniMarkers = [];
-async function renderMiniMap(data){
-  const el = document.getElementById('mini-map');
-  if(!el) return;
-  if(!miniMap){
-    miniMap = L.map('mini-map', { zoomControl:false, attributionControl:false, dragging:true, scrollWheelZoom:false }).setView([0,0], 2);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(miniMap);
-  }
-  const coords = dayCoords(data);
-  if(miniPolyline) miniMap.removeLayer(miniPolyline);
-  miniMarkers.forEach(m=>miniMap.removeLayer(m));
-  miniMarkers = [];
-  setTimeout(()=>miniMap.invalidateSize(), 50);
-  if(coords.length < 1) return;
-
-  if(coords.length >= 2){
-    const points = coords.map(c=>`${c[1]},${c[0]}`).join(';');
-    try{
-      const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${points}?overview=full&geometries=geojson`);
-      const json = await res.json();
-      if(json.code === 'Ok' && json.routes?.[0]){
-        const geo = json.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
-        miniPolyline = L.polyline(geo, { color:'#fbbf24', weight:5, opacity:.85 }).addTo(miniMap);
-      }
-    }catch(e){
-      miniPolyline = L.polyline(coords, { color:'#fbbf24', weight:3 }).addTo(miniMap);
-    }
-  }
-  coords.forEach((c, idx)=>{
-    miniMarkers.push(L.circleMarker(c, { radius:5, color:'#000', fillColor: idx===0 ? '#10b981' : '#fbbf24', fillOpacity:1, weight:2 }).addTo(miniMap));
-  });
-  if(miniPolyline) miniMap.fitBounds(miniPolyline.getBounds(), { padding:[30,30] });
-  else if(coords.length) miniMap.setView(coords[0], 13);
-}
-
-// ---------- map ----------
-async function updateMapRoute(data){
-  if(!map) return;
-  const coords = dayCoords(data);
-  if(polyline) map.removeLayer(polyline);
-  markers.forEach(m=>map.removeLayer(m));
-  markers = [];
-  if(coords.length < 1) return;
-
-  if(coords.length >= 2){
-    const points = coords.map(c=>`${c[1]},${c[0]}`).join(';');
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${points}?overview=full&geometries=geojson`;
-    try{
-      const res = await fetch(osrmUrl);
-      const json = await res.json();
-      if(json.code === 'Ok' && json.routes?.[0]){
-        const streetGeometry = json.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
-        window.tripDistances[data.id] = json.routes[0].distance/1000;
-        polyline = L.polyline(streetGeometry, { color:'#fbbf24', weight:6, opacity:.85 }).addTo(map);
-        document.getElementById('map-day-km').innerText = (json.routes[0].distance/1000).toFixed(1);
-        document.getElementById('map-km-label').innerText = `Rota: ${(json.routes[0].distance/1000).toFixed(1)}km`;
-        await persistTrip();
-      }
-    }catch(e){
-      polyline = L.polyline(coords, { color:'#fbbf24', weight:4 }).addTo(map);
-    }
-  }
-
-  coords.forEach((c, idx)=>{
-    markers.push(L.circleMarker(c, { radius:6, color:'#000', fillColor: idx===0 ? '#10b981' : '#fbbf24', fillOpacity:1, weight:2 }).addTo(map));
-  });
-  if(polyline) map.fitBounds(polyline.getBounds(), { padding:[50,50] });
-  else if(coords.length) map.setView(coords[0], 13);
-  updateTotalKmDisplay();
-}
-
-function updateTotalKmDisplay(){
-  let total = 0;
-  Object.values(window.tripDistances).forEach(v=>total+=v);
-  document.getElementById('map-total-trip-km').innerText = `${total.toFixed(1)} km`;
-}
-
-// ---------- view switching ----------
 window.switchView = (v)=>{
   const views = { dashboard:'dashboard-view', itinerary:'itinerary-view', map:'map-view' };
   const navs = { dashboard:['nav-dashboard','tab-dashboard'], itinerary:['nav-itinerary','tab-itinerary'], map:['nav-map','tab-map'] };
@@ -1173,334 +917,42 @@ window.switchView = (v)=>{
   }
 };
 
+async function updateMapRoute(data){
+  if(!map) return;
+  const coords = dayCoords(data);
+  if(polyline) map.removeLayer(polyline);
+  markers.forEach(m=>map.removeLayer(m));
+  markers = [];
+  if(coords.length < 1) return;
+
+  if(coords.length >= 2){
+    const points = coords.map(c=>`${c[1]},${c[0]}`).join(';');
+    try{
+      const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${points}?overview=full&geometries=geojson`);
+      const json = await res.json();
+      if(json.code === 'Ok' && json.routes?.[0]){
+        const streetGeometry = json.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+        window.tripDistances[data.id] = json.routes[0].distance/1000;
+        polyline = L.polyline(streetGeometry, { color:'#fbbf24', weight:6, opacity:.85 }).addTo(map);
+        document.getElementById('map-day-km').innerText = (json.routes[0].distance/1000).toFixed(1);
+        document.getElementById('map-km-label').innerText = `Rota: ${(json.routes[0].distance/1000).toFixed(1)}km`;
+      }
+    }catch(e){
+      polyline = L.polyline(coords, { color:'#fbbf24', weight:4 }).addTo(map);
+    }
+  }
+
+  coords.forEach((c, idx)=>{
+    markers.push(L.circleMarker(c, { radius:6, color:'#000', fillColor: idx===0 ? '#10b981' : '#fbbf24', fillOpacity:1, weight:2 }).addTo(map));
+  });
+  if(polyline) map.fitBounds(polyline.getBounds(), { padding:[50,50] });
+  else if(coords.length) map.setView(coords[0], 13);
+  let total = 0;
+  Object.values(window.tripDistances).forEach(v=>total+=v);
+  document.getElementById('map-total-trip-km').innerText = `${total.toFixed(1)} km`;
+}
+
 safeIcons();
-
-// ================= EDITAR VIAGEM =================
-window.editTripDetails = ()=>{
-  const meta = window.tripMeta || {};
-  document.getElementById('user-origin').value = meta.origin || '';
-  document.getElementById('user-destination').value = meta.destination || '';
-  document.getElementById('trip-start').value = meta.startDate || '';
-  document.getElementById('trip-end').value = meta.endDate || '';
-  document.getElementById('user-query').value = meta.extra || '';
-  setTier(meta.tier || 'standard');
-  setAcc(meta.acc || 'hotel');
-  setTransport(meta.transport || 'aviao');
-  closeManage();
-  document.getElementById('close-editor-btn').classList.remove('hidden');
-  openEditor();
-  toast('Ajuste os dados e toque em "Gerar roteiro" para recriar a viagem.');
-};
-
-window.cancelTrip = async ()=>{
-  if(!confirm('Cancelar esta viagem? O roteiro atual será apagado.')) return;
-  window.itineraryData = [];
-  window.tripMeta = {};
-  window.tripDistances = {};
-  await persistTrip();
-  closeManage();
-  document.getElementById('app-header').classList.add('hidden');
-  document.getElementById('app-header').classList.remove('flex');
-  document.getElementById('top-tabs').classList.add('hidden');
-  document.getElementById('day-selector').classList.add('hidden');
-  document.getElementById('bottom-navigation').classList.add('hidden');
-  document.getElementById('edit-button').classList.add('hidden');
-  document.getElementById('new-trip-btn').classList.add('hidden');
-  document.getElementById('user-origin').value = '';
-  document.getElementById('user-destination').value = '';
-  document.getElementById('trip-start').value = '';
-  document.getElementById('trip-end').value = '';
-  document.getElementById('user-query').value = '';
-  document.getElementById('close-editor-btn').classList.add('hidden');
-  openEditor();
-};
-
-window.openManage = ()=>{
-  document.getElementById('manage-screen').classList.remove('hidden');
-  renderManageList();
-};
-window.closeManage = ()=>{
-  document.getElementById('manage-screen').classList.add('hidden');
-};
-
-function nextDatesAfter(lastDateStr, count){
-  const out = [];
-  let d = new Date(lastDateStr + 'T00:00:00');
-  for(let i=0;i<count;i++){
-    d.setDate(d.getDate()+1);
-    out.push(new Date(d).toISOString().slice(0,10));
-  }
-  return out;
-}
-
-function renderManageList(){
-  const c = document.getElementById('manage-content');
-  const meta = window.tripMeta || {};
-  c.innerHTML = `
-    <div class="card mb-5">
-      <span class="eyebrow block mb-1">Viagem atual</span>
-      <p class="font-extrabold text-sm mb-3">${meta.destination || '—'} · ${window.itineraryData.length} dias</p>
-      <div class="grid grid-cols-2 gap-2">
-        <button onclick="editTripDetails()" class="bg-neutral-900 text-amber-400 font-black py-3 rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2"><i data-lucide="pencil" style="width:14px;height:14px"></i> Editar dados</button>
-        <button onclick="cancelTrip()" class="bg-neutral-900 text-red-400 font-black py-3 rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2"><i data-lucide="x-circle" style="width:14px;height:14px"></i> Cancelar viagem</button>
-      </div>
-    </div>
-
-    <div class="card mb-5">
-      <span class="eyebrow block mb-3">Adicionar dias ao roteiro</span>
-      <div class="flex gap-2">
-        <input id="add-days-count" type="number" min="1" max="10" value="1" class="w-20 bg-black border-2 border-neutral-900 rounded-xl py-3 px-3 text-white text-center mono focus:border-amber-400 outline-none">
-        <button onclick="addDays()" id="add-days-btn" class="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl text-sm uppercase tracking-wide hover:bg-amber-400 transition-colors">Gerar e adicionar</button>
-      </div>
-      <p id="add-days-error" class="hidden text-[11px] font-bold text-red-400 mt-3"></p>
-    </div>
-    <span class="eyebrow block mb-3">Dias do roteiro</span>
-    <div id="manage-day-list" class="space-y-3"></div>
-  `;
-  const list = document.getElementById('manage-day-list');
-  list.innerHTML = '';
-  window.itineraryData.forEach(d=>{
-    const row = document.createElement('div');
-    row.className = 'card flex items-center justify-between';
-    row.innerHTML = `
-      <div class="min-w-0">
-        <p class="eyebrow text-amber-400">Dia ${d.id} · ${d.date || ''}</p>
-        <p class="font-extrabold text-sm mt-1 truncate">${d.title}</p>
-      </div>
-      <div class="flex gap-2 shrink-0 ml-3">
-        <button onclick="openDayEditor(${d.id})" class="w-9 h-9 flex items-center justify-center rounded-xl bg-neutral-900 text-amber-400"><i data-lucide="pencil" style="width:15px;height:15px"></i></button>
-        <button onclick="deleteDay(${d.id})" class="w-9 h-9 flex items-center justify-center rounded-xl bg-neutral-900 text-red-400"><i data-lucide="trash-2" style="width:15px;height:15px"></i></button>
-      </div>`;
-    list.appendChild(row);
-  });
-  safeIcons();
-}
-
-window.addDays = async ()=>{
-  const countInput = document.getElementById('add-days-count');
-  const errEl = document.getElementById('add-days-error');
-  const btn = document.getElementById('add-days-btn');
-  errEl.classList.add('hidden');
-  const count = Math.max(1, Math.min(10, parseInt(countInput.value) || 1));
-  const meta = window.tripMeta || {};
-  const lastDay = window.itineraryData[window.itineraryData.length-1];
-  if(!lastDay){ errEl.innerText = 'Nenhum roteiro carregado ainda.'; errEl.classList.remove('hidden'); return; }
-
-  btn.disabled = true;
-  btn.innerText = 'A gerar...';
-  try{
-    const newDates = nextDatesAfter(lastDay.date, count);
-    const ctx = { origin: meta.origin, destination: meta.destination, tier: meta.tier, acc: meta.acc, transport: meta.transport, extra: document.getElementById('user-query')?.value || '' };
-    let prevSummary = `${lastDay.title} — ${lastDay.subtitle}`;
-    let startId = window.itineraryData.length;
-    for(let i=0;i<count;i++){
-      const dayIndex = startId + i + 1;
-      let dayData = null, lastErr = null;
-      for(let attempt=0; attempt<2 && !dayData; attempt++){
-        try{ dayData = await callAIForDay(dayIndex, dayIndex, newDates[i], ctx, prevSummary); }
-        catch(e){ lastErr = e; if(attempt<1) await new Promise(r=>setTimeout(r,700)); }
-      }
-      if(!dayData){
-        errEl.innerText = `Falha ao gerar o dia ${dayIndex}: ${lastErr?.message || 'erro desconhecido'}`;
-        errEl.classList.remove('hidden');
-        break;
-      }
-      dayData.id = dayIndex;
-      window.itineraryData.push(dayData);
-      await precomputeDistance(dayData);
-      prevSummary = `${dayData.title} — ${dayData.subtitle}`;
-    }
-    await persistTrip();
-    generateDayPicker();
-    loadDashboard();
-    renderManageList();
-    toast('Dias adicionados ao roteiro.');
-  }catch(e){
-    errEl.innerText = 'Erro: ' + (e.message || e);
-    errEl.classList.remove('hidden');
-  }finally{
-    btn.disabled = false;
-    btn.innerText = 'Gerar e adicionar';
-  }
-};
-
-window.deleteDay = async (id)=>{
-  if(!confirm(`Eliminar o dia ${id} do roteiro?`)) return;
-  window.itineraryData = window.itineraryData.filter(d=>d.id!==id);
-  window.itineraryData.forEach((d,idx)=>{ d.id = idx+1; });
-  delete window.tripDistances[id];
-  await persistTrip();
-  generateDayPicker();
-  loadDashboard();
-  if(window.itineraryData.length) loadDay(Math.min(currentDayId, window.itineraryData.length));
-  renderManageList();
-};
-
-window.openDayEditor = (id)=>{
-  const day = window.itineraryData.find(d=>d.id===id);
-  if(!day) return;
-  const c = document.getElementById('manage-content');
-  const timelineRows = (day.timeline||[]).map((item, idx)=>`
-    <div class="flex gap-2 mb-2 timeline-edit-row" data-idx="${idx}">
-      <input type="text" value="${(item.time||'').replace(/"/g,'&quot;')}" placeholder="08:00" class="w-14 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-time">
-      <input type="text" value="${(item.duration||'').replace(/"/g,'&quot;')}" placeholder="1h30" class="w-14 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-duration">
-      <input type="text" value="${(item.desc||'').replace(/"/g,'&quot;')}" placeholder="Atividade" class="flex-1 min-w-0 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs focus:border-amber-400 outline-none tl-desc">
-      <input type="text" value="${(item.price||'').replace(/"/g,'&quot;')}" placeholder="€ 0" class="w-16 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-price">
-      <button onclick="this.parentElement.remove()" class="text-red-400 px-2"><i data-lucide="x" style="width:14px;height:14px"></i></button>
-    </div>`).join('');
-
-  c.innerHTML = `
-    <button onclick="renderManageList()" class="eyebrow text-neutral-500 mb-4 flex items-center gap-1"><i data-lucide="chevron-left" style="width:14px;height:14px"></i> Voltar</button>
-
-    <div class="space-y-3 mb-5">
-      <div>
-        <label class="eyebrow text-amber-400 mb-1 block">Título do dia</label>
-        <input id="ed-title" type="text" value="${(day.title||'').replace(/"/g,'&quot;')}" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none">
-      </div>
-      <div>
-        <label class="eyebrow text-amber-400 mb-1 block">Região / bairro</label>
-        <input id="ed-subtitle" type="text" value="${(day.subtitle||'').replace(/"/g,'&quot;')}" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none">
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="eyebrow text-neutral-500 mb-1 block">Alojamento</label>
-          <input id="ed-hotel-name" type="text" value="${(day.hotel?.name||'').replace(/"/g,'&quot;')}" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none">
-        </div>
-        <div>
-          <label class="eyebrow text-neutral-500 mb-1 block">Clima</label>
-          <input id="ed-weather" type="text" value="${(day.weather||'').replace(/"/g,'&quot;')}" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none">
-        </div>
-      </div>
-      <div>
-        <label class="eyebrow text-neutral-500 mb-1 block">Morada do alojamento</label>
-        <input id="ed-hotel-address" type="text" value="${(day.hotel?.address||'').replace(/"/g,'&quot;')}" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-4 text-white text-sm focus:border-amber-400 outline-none">
-      </div>
-      <div class="grid grid-cols-3 gap-3">
-        <div>
-          <label class="eyebrow text-neutral-500 mb-1 block">Comida</label>
-          <input id="ed-meal" type="text" value="${(day.meal||'').replace(/"/g,'&quot;')}" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-3 text-white text-xs mono focus:border-amber-400 outline-none">
-        </div>
-        <div>
-          <label class="eyebrow text-neutral-500 mb-1 block">Passeios</label>
-          <input id="ed-ticket" type="text" value="${(day.ticket||'').replace(/"/g,'&quot;')}" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-3 text-white text-xs mono focus:border-amber-400 outline-none">
-        </div>
-        <div>
-          <label class="eyebrow text-neutral-500 mb-1 block">Total</label>
-          <input id="ed-total" type="text" value="${(day.total||'').replace(/"/g,'&quot;')}" class="w-full bg-black border-2 border-neutral-900 rounded-xl py-3 px-3 text-white text-xs mono focus:border-amber-400 outline-none">
-        </div>
-      </div>
-    </div>
-
-    <div class="mb-5">
-      <div class="flex items-center justify-between mb-2">
-        <span class="eyebrow">Linha do tempo</span>
-        <button onclick="addTimelineRow()" class="text-[10px] font-black text-emerald-500 uppercase">+ Item</button>
-      </div>
-      <div id="tl-rows">${timelineRows}</div>
-      <p class="text-[10px] text-neutral-600 font-semibold mt-2">Itens novos entram sem coordenadas — não aparecem no mapa até regenerar o dia com IA.</p>
-    </div>
-
-    <button onclick="saveDayEdits(${day.id})" class="w-full bg-emerald-500 text-black font-black py-4 rounded-2xl text-sm uppercase tracking-widest hover:bg-amber-400 transition-colors mb-3">Guardar alterações</button>
-
-    <div class="card">
-      <span class="eyebrow block mb-2">Regenerar este dia com IA</span>
-      <textarea id="ed-regen-instruction" class="w-full bg-black border-2 border-neutral-900 rounded-xl p-3 text-white text-xs h-16 focus:border-amber-400 outline-none" placeholder="Ex: trocar por atividades ao ar livre, orçamento menor..."></textarea>
-      <button onclick="regenerateDay(${day.id})" id="regen-btn-${day.id}" class="w-full bg-neutral-900 text-amber-400 font-black py-3 rounded-xl text-xs uppercase tracking-widest mt-3 border border-amber-400/30">Regenerar com IA</button>
-      <p id="regen-error-${day.id}" class="hidden text-[11px] font-bold text-red-400 mt-2"></p>
-    </div>
-  `;
-  safeIcons();
-};
-
-window.addTimelineRow = ()=>{
-  const wrap = document.getElementById('tl-rows');
-  const div = document.createElement('div');
-  div.className = 'flex gap-2 mb-2 timeline-edit-row';
-  div.innerHTML = `
-    <input type="text" placeholder="08:00" class="w-14 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-time">
-    <input type="text" placeholder="1h30" class="w-14 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-duration">
-    <input type="text" placeholder="Atividade" class="flex-1 min-w-0 bg-black border-2 border-neutral-900 rounded-lg py-2 px-2 text-white text-xs focus:border-amber-400 outline-none tl-desc">
-    <input type="text" placeholder="€ 0" class="w-16 bg-black border-2 border-neutral-900 rounded-lg py-2 px-1.5 text-white text-xs mono focus:border-amber-400 outline-none tl-price">
-    <button onclick="this.parentElement.remove()" class="text-red-400 px-2"><i data-lucide="x" style="width:14px;height:14px"></i></button>`;
-  wrap.appendChild(div);
-  safeIcons();
-};
-
-window.saveDayEdits = async (id)=>{
-  const day = window.itineraryData.find(d=>d.id===id);
-  if(!day) return;
-  const originalTimeline = day.timeline || [];
-
-  day.title = document.getElementById('ed-title').value;
-  day.subtitle = document.getElementById('ed-subtitle').value;
-  day.weather = document.getElementById('ed-weather').value;
-  day.hotel = day.hotel || {};
-  day.hotel.name = document.getElementById('ed-hotel-name').value;
-  day.hotel.address = document.getElementById('ed-hotel-address').value;
-  day.meal = document.getElementById('ed-meal').value;
-  day.ticket = document.getElementById('ed-ticket').value;
-  day.total = document.getElementById('ed-total').value;
-
-  const rows = document.querySelectorAll('#tl-rows .timeline-edit-row');
-  const newTimeline = [];
-  rows.forEach((row, idx)=>{
-    const time = row.querySelector('.tl-time').value.trim();
-    const duration = row.querySelector('.tl-duration').value.trim();
-    const desc = row.querySelector('.tl-desc').value.trim();
-    const price = row.querySelector('.tl-price').value.trim();
-    if(!desc) return;
-    const original = originalTimeline[idx];
-    const item = { time, duration, desc, price };
-    if(original && typeof original.lat === 'number' && typeof original.lng === 'number'){
-      item.lat = original.lat; item.lng = original.lng;
-    }
-    newTimeline.push(item);
-  });
-  day.timeline = newTimeline;
-
-  await precomputeDistance(day);
-  await persistTrip();
-  generateDayPicker();
-  loadDashboard();
-  if(currentDayId === id) loadDay(id);
-  renderManageList();
-  toast('Dia atualizado.');
-};
-
-window.regenerateDay = async (id)=>{
-  const day = window.itineraryData.find(d=>d.id===id);
-  if(!day) return;
-  const instruction = document.getElementById('ed-regen-instruction').value;
-  const errEl = document.getElementById(`regen-error-${id}`);
-  const btn = document.getElementById(`regen-btn-${id}`);
-  errEl.classList.add('hidden');
-  btn.disabled = true;
-  btn.innerText = 'A regenerar...';
-  const meta = window.tripMeta || {};
-  try{
-    const prevDay = window.itineraryData.find(d=>d.id === id-1);
-    const prevSummary = prevDay ? `${prevDay.title} — ${prevDay.subtitle}` : '';
-    const ctx = { origin: meta.origin, destination: meta.destination, tier: meta.tier, acc: meta.acc, transport: meta.transport, extra: instruction || 'nenhuma' };
-    const newDay = await callAIForDay(id, window.itineraryData.length, day.date, ctx, prevSummary);
-    newDay.id = id;
-    newDay.date = day.date;
-    const idx = window.itineraryData.findIndex(d=>d.id===id);
-    window.itineraryData[idx] = newDay;
-    await precomputeDistance(newDay);
-    await persistTrip();
-    generateDayPicker();
-    loadDashboard();
-    if(currentDayId === id) loadDay(id);
-    openDayEditor(id);
-    toast('Dia regenerado com IA.');
-  }catch(e){
-    errEl.innerText = 'Erro ao regenerar: ' + (e.message || e);
-    errEl.classList.remove('hidden');
-  }finally{
-    btn.disabled = false;
-    btn.innerText = 'Regenerar com IA';
-  }
-};
 </script>
 </body>
 </html>
