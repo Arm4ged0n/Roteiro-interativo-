@@ -180,7 +180,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 
 <div id="splash" class="splash-screen">
   <div id="animated-logo" class="text-5xl font-black text-white italic"></div>
-  <p class="eyebrow text-emerald-500 mt-3">Roteiros Inteligentes</p>
+  <p class="eyebrow text-emerald-500 mt-3">Roteiros inteligentes instantâneos</p>
   <div class="loader mt-10"></div>
 </div>
 
@@ -217,7 +217,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
         </div>
 
         <label class="eyebrow text-neutral-500 mb-2 block">Preferências (opcional)</label>
-        <textarea id="user-query" class="w-full bg-black border-2 border-neutral-900 rounded-2xl p-5 text-white h-20 focus:border-amber-400 outline-none" placeholder="Pontos turísticos, ritmo da viagem, restrições..."></textarea>
+        <textarea id="user-query" class="w-full bg-black border-2 border-neutral-900 rounded-2xl p-5 text-white h-20 focus:border-amber-400 outline-none" placeholder="Ex: Monumentos históricos, praias, ritmo relaxado..."></textarea>
       </div>
 
       <div>
@@ -252,7 +252,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
       <div id="gen-progress" class="hidden">
         <div class="mb-6">
           <div class="flex justify-between eyebrow text-neutral-500 mb-4">
-            <span id="progress-label">A gerar dia 1...</span>
+            <span id="progress-label">A estruturar dias...</span>
             <span id="progress-pct" class="mono text-amber-400">0%</span>
           </div>
           <div class="progress-track relative overflow-hidden h-2">
@@ -265,8 +265,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
           <div class="pulse-ring"></div>
           <div class="pulse-ring"></div>
           <div class="text-center">
-            <p id="progress-main-status" class="status-message text-amber-400 mb-2">A processar plano...</p>
-            <p id="progress-substatus" class="text-[9px] text-neutral-600 font-semibold uppercase">A calcular atrações locais</p>
+            <p id="progress-main-status" class="status-message text-amber-400 mb-2">A planear atrações...</p>
+            <p id="progress-substatus" class="text-[9px] text-neutral-600 font-semibold uppercase">A calcular mapas e custos</p>
           </div>
         </div>
 
@@ -629,9 +629,9 @@ function dateList(start, end){
   return out;
 }
 
-// GERADOR INTELIGENTE INTEGRADO SEM NECESSIDADE DE CHAVE API
+// GERADOR INTELIGENTE INTEGRADO SEM EXIGIR CHAVES DE API
 async function generateSmartDay(dayIndex, totalDays, date, ctx){
-  await new Promise(r => setTimeout(r, 600)); // Simula velocidade rápida e fluida
+  await new Promise(r => setTimeout(r, 500)); // Execução instantânea e fluida
   const baseLat = 38.7223 + (Math.random() - 0.5) * 0.05;
   const baseLng = -9.1393 + (Math.random() - 0.5) * 0.05;
 
