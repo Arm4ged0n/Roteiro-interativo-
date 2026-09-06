@@ -323,7 +323,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
       </div>
       <div class="kpi border-l-2 border-l-emerald-500">
         <span class="eyebrow">Custo total</span>
-        <div class="kpi-val mono" id="kpi-total">€ --</div>
+        <div class="kpi-val mono" id="kpi-total">R$ --</div>
       </div>
       <div class="kpi border-l-2 border-l-neutral-600">
         <span class="eyebrow">Distância total</span>
@@ -386,7 +386,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
       <div class="bg-amber-400 p-7 rounded-[28px] text-black shadow-2xl">
         <div class="flex justify-between items-center mb-4">
           <span class="text-xs font-black uppercase">Subtotal do dia</span>
-          <span id="total-val" class="text-3xl font-black mono">€ --</span>
+          <span id="total-val" class="text-3xl font-black mono">R$ --</span>
         </div>
         <div class="grid grid-cols-2 gap-4 text-[10px] font-black uppercase">
           <div class="bg-black/5 p-4 rounded-xl">Comida: <span id="meal-val" class="mono">--</span></div>
@@ -629,7 +629,7 @@ function dateList(start, end){
   return out;
 }
 
-// GERADOR INTELIGENTE INTEGRADO SEM EXIGIR CHAVES DE API
+// GERADOR INTELIGENTE INTEGRADO SEM EXIGIR CHAVES DE API COM MOEDA R$
 async function generateSmartDay(dayIndex, totalDays, date, ctx){
   await new Promise(r => setTimeout(r, 500)); // Execução instantânea e fluida
   const baseLat = 38.7223 + (Math.random() - 0.5) * 0.05;
@@ -656,15 +656,15 @@ async function generateSmartDay(dayIndex, totalDays, date, ctx){
       lng: baseLng
     },
     timeline: [
-      { time: "09:00", duration: "1h30", desc: "Pequeno-almoço e deslocação inicial", price: "€ 15", lat: baseLat + 0.01, lng: baseLng + 0.01 },
-      { time: "11:00", duration: "2h00", desc: "Visita guiada ao monumento principal", price: "€ 25", lat: baseLat + 0.02, lng: baseLng - 0.01 },
-      { time: "13:30", duration: "1h30", desc: "Almoço em restaurante típico recomendado", price: "€ 35", lat: baseLat - 0.01, lng: baseLng + 0.02 },
-      { time: "15:30", duration: "2h30", desc: "Passeio a pé e pontos panorâmicos", price: "€ 0", lat: baseLat - 0.02, lng: baseLng - 0.02 },
-      { time: "19:30", duration: "2h00", desc: "Jantar com especialidades locais", price: "€ 50", lat: baseLat, lng: baseLng }
+      { time: "09:00", duration: "1h30", desc: "Café da manhã e deslocação inicial", price: "R$ 80", lat: baseLat + 0.01, lng: baseLng + 0.01 },
+      { time: "11:00", duration: "2h00", desc: "Visita guiada ao monumento principal", price: "R$ 130", lat: baseLat + 0.02, lng: baseLng - 0.01 },
+      { time: "13:30", duration: "1h30", desc: "Almoço em restaurante típico recomendado", price: "R$ 180", lat: baseLat - 0.01, lng: baseLng + 0.02 },
+      { time: "15:30", duration: "2h30", desc: "Passeio a pé e pontos panorâmicos", price: "R$ 0", lat: baseLat - 0.02, lng: baseLng - 0.02 },
+      { time: "19:30", duration: "2h00", desc: "Jantar com especialidades locais", price: "R$ 260", lat: baseLat, lng: baseLng }
     ],
-    meal: "€ 85",
-    ticket: "€ 25",
-    total: "€ 125"
+    meal: "R$ 520",
+    ticket: "R$ 130",
+    total: "R$ 650"
   };
 }
 
@@ -788,7 +788,8 @@ function loadDashboard(){
 
   let totalCost = 0;
   window.itineraryData.forEach(d => totalCost += parseCurrency(d.total));
-  document.getElementById('kpi-total').innerText = `€ ${totalCost.toLocaleString('pt-PT')}`;
+  // Convertido para Reais (R$) com formato pt-BR
+  document.getElementById('kpi-total').innerText = `R$ ${totalCost.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
   let totalKm = 0;
   Object.values(window.tripDistances || {}).forEach(v => totalKm += v);
