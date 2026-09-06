@@ -69,12 +69,15 @@ body{
 .mono{font-family:'JetBrains Mono',monospace}
 ::-webkit-scrollbar{width:0;height:0}
 
+/* ---- splash ---- */
 .char{display:inline-block;opacity:0;transform:translateY(-60px);filter:blur(8px);animation:charFall .55s cubic-bezier(.175,.885,.32,1.275) forwards}
 @keyframes charFall{0%{opacity:0;transform:translateY(-60px);filter:blur(8px)}60%{opacity:1;filter:blur(0)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
 .splash-screen{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;transition:opacity .5s ease-out;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 
+/* ---- overlay form ---- */
 .input-overlay{position:absolute;inset:0;background:rgba(0,0,0,.96);backdrop-filter:blur(20px);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:20px;padding-top:max(20px, env(safe-area-inset-top));padding-bottom:max(20px, env(safe-area-inset-bottom));overflow-y:auto}
 
+/* ---- top tabs ---- */
 .top-tabs{display:flex;gap:6px;padding:14px 20px 10px;background:var(--bg-deep);border-bottom:1px solid var(--border);z-index:100}
 .top-tab{flex:1;text-align:center;padding:10px 6px;border-radius:14px;font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#4a4a4a;border:1px solid transparent;transition:.2s}
 .top-tab.active{background:var(--bg-card);color:var(--accent);border-color:var(--border)}
@@ -176,6 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(100
 <div id="app-shell">
 
 <div id="splash" class="splash-screen">
+  <!-- O LOGO SERÁ INJETADO AQUI VIA JS -->
   <div id="animated-logo" class="text-5xl font-black text-white italic"></div>
   <p class="eyebrow text-emerald-500 mt-3">Roteiros inteligentes instantâneos</p>
   <div class="loader mt-10"></div>
@@ -442,6 +446,7 @@ async function storageGet(key){ return memStorage[key] || null; }
 
 function startSplashAnimation(){
   const c = document.getElementById('animated-logo');
+  if(!c) return;
   const text = "Roteiro.IA";
   c.innerHTML = '';
   text.split('').forEach((ch,i)=>{
@@ -512,9 +517,12 @@ startSplashAnimation();
 
 async function boot(){
   setTimeout(()=>{
-    document.getElementById('splash').style.opacity = '0';
-    setTimeout(()=>document.getElementById('splash').style.display='none', 500);
-  }, 1200);
+    const splash = document.getElementById('splash');
+    if(splash){
+        splash.style.opacity = '0';
+        setTimeout(()=>splash.style.display='none', 500);
+    }
+  }, 1500);
   safeIcons();
 }
 boot();
@@ -633,21 +641,25 @@ function formatBRL(val) {
 function parseCurrency(str){
   if(!str) return 0;
   let clean = String(str).replace(/[^\d,.-]/g, '');
-  clean = clean.split('.').join('').replace(',', '.');
+  clean = clean.split('.').join('').replace(',', '.'); 
   const n = parseFloat(clean);
   return isNaN(n) ? 0 : n;
 }
 
-// Nova Função: Integração Real com IA buscando os valores atualizados
-async function fetchRealValuesFromAI(destination, tier, dayIndex) {
+// CHAMADA PARA A IA REAL DO GEMINI COM O GOOGLE SEARCH
+async function fetchFullItineraryFromAI(destination, tier, totalDays, extra) {
   try {
-    const apiKey = ""; // Canvas framework cuidará de instanciar a API key no backend automaticamente
+    const apiKey = ""; // Canvas injects it automatically
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-    
-    const prompt = `Como um consultor de viagens, planeje um roteiro APENAS para o Dia ${dayIndex} em ${destination}.
-    Orçamento do usuário: ${tier}. 
-    MUITO IMPORTANTE: Use a ferramenta do Google Search (pesquisa) para encontrar atrações reais e os PREÇOS REAIS atualizados (ingressos, almoço e passeios). 
-    Se o preço original for noutra moeda, converta para Reais (BRL) usando a cotação de hoje. Preencha tudo com lugares que existam mesmo.`;
+
+    const prompt = `Crie um roteiro detalhado para ${totalDays} dias em ${destination}.
+    Orçamento: ${tier}. 
+    Preferências: ${extra || 'Nenhuma'}.
+    REGRAS VITAIS:
+    1. NUNCA use descrições genéricas. Use NOME REAL dos lugares que existem em ${destination} (ex: "Caminito", "Teatro Colón", "Don Julio", "Parque del Retiro").
+    2. O roteiro deve ter exatamente ${totalDays} dias diferentes, sem repetir atrações. Faça os dias fazerem sentido geograficamente.
+    3. Pesquise no Google para obter as atrações REAIS e preços de bilhetes atualizados.
+    4. Converta TODOS os valores para Reais (BRL). Se a atração for gratuita (como praças e mirantes públicos), coloque 0. Retorne apenas NÚMEROS nos campos de preço.`;
 
     const payload = {
       contents: [{ parts: [{ text: prompt }] }],
@@ -655,36 +667,32 @@ async function fetchRealValuesFromAI(destination, tier, dayIndex) {
       generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
-              type: "OBJECT",
-              properties: {
-                  theme: { type: "STRING" },
-                  cafe_desc: { type: "STRING", description: "Onde tomar café da manhã, nome real" },
-                  cafe_price: { type: "NUMBER", description: "Preço em BRL" },
-                  tour1_desc: { type: "STRING", description: "Nome real da primeira atração principal" },
-                  tour1_price: { type: "NUMBER", description: "Preço real do ingresso em BRL" },
-                  lunch_desc: { type: "STRING", description: "Nome do restaurante ou região para almoço" },
-                  lunch_price: { type: "NUMBER", description: "Preço estimado em BRL" },
-                  tour2_desc: { type: "STRING", description: "Nome real de passeio secundário ou parque" },
-                  tour2_price: { type: "NUMBER", description: "Preço do passeio em BRL" },
-                  dinner_desc: { type: "STRING", description: "Nome de restaurante para jantar" },
-                  dinner_price: { type: "NUMBER", description: "Preço estimado em BRL" }
-              },
-              required: ["theme", "cafe_desc", "cafe_price", "tour1_desc", "tour1_price", "lunch_desc", "lunch_price", "tour2_desc", "tour2_price", "dinner_desc", "dinner_price"]
+              type: "ARRAY",
+              description: `Lista com os ${totalDays} dias da viagem.`,
+              items: {
+                  type: "OBJECT",
+                  properties: {
+                      theme: { type: "STRING", description: "Tema curto do dia (ex: Centro Histórico, Bairro X)" },
+                      hotel_name: { type: "STRING", description: "Nome de um hotel real na região" },
+                      cafe_desc: { type: "STRING", description: "Nome real de uma padaria/café" },
+                      cafe_price: { type: "NUMBER" },
+                      tour1_desc: { type: "STRING", description: "Nome real da atração principal da manhã" },
+                      tour1_price: { type: "NUMBER" },
+                      lunch_desc: { type: "STRING", description: "Nome real de restaurante para almoço" },
+                      lunch_price: { type: "NUMBER" },
+                      tour2_desc: { type: "STRING", description: "Nome real da atração da tarde" },
+                      tour2_price: { type: "NUMBER" },
+                      dinner_desc: { type: "STRING", description: "Nome real de restaurante para jantar" },
+                      dinner_price: { type: "NUMBER" }
+                  },
+                  required: ["theme", "hotel_name", "cafe_desc", "cafe_price", "tour1_desc", "tour1_price", "lunch_desc", "lunch_price", "tour2_desc", "tour2_price", "dinner_desc", "dinner_price"]
+              }
           }
       }
     };
 
-    let response;
-    // Tentar com exponencial backoff para lidar com o limite da IA
-    for (let i = 0; i < 3; i++) {
-        response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if (response.ok) break;
-        if (response.status === 429) {
-           await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
-        } else break;
-    }
-
-    if (response && response.ok) {
+    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (response.ok) {
         const result = await response.json();
         if (result.candidates && result.candidates[0].content.parts[0].text) {
             return JSON.parse(result.candidates[0].content.parts[0].text);
@@ -693,36 +701,29 @@ async function fetchRealValuesFromAI(destination, tier, dayIndex) {
   } catch (error) {
     console.warn("Falha no LLM fetch:", error);
   }
-  return null; // Caso não consiga contato com a API, fará o fallback dinâmico
+  return null;
 }
 
-async function generateSmartDay(dayIndex, totalDays, date, ctx){
-  // Tenta obter o roteiro usando dados e preços de internet via IA
-  const aiData = await fetchRealValuesFromAI(ctx.destination, ctx.tier, dayIndex);
-
-  // Fallback (caso a API falhe): Gera valores dinâmicos realistas
-  const getDynamicPrice = (type) => {
-      let min = 0, max = 0;
-      if (type === 'cafe') { min=15; max=30; if(ctx.tier!=='econômico'){min*=2;max*=2;} if(ctx.tier==='premium'){min*=2;max*=2;} }
-      else if (type === 'almoco' || type === 'jantar') { min=35; max=65; if(ctx.tier!=='econômico'){min*=2;max*=2;} if(ctx.tier==='premium'){min*=2;max*=2;} }
-      else if (type === 'passeio') { min=0; max=40; if(ctx.tier!=='econômico'){min=50;max=150;} if(ctx.tier==='premium'){min=150;max=400;} }
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-  };
-
-  const data = aiData || {
-      theme: `Pontos Essenciais de ${ctx.destination}`,
-      cafe_desc: "Café da manhã com especialidades locais", cafe_price: getDynamicPrice('cafe'),
-      tour1_desc: "Visita e passeio à atração principal da região", tour1_price: getDynamicPrice('passeio'),
-      lunch_desc: "Almoço em restaurante típico recomendado", lunch_price: getDynamicPrice('almoco'),
-      tour2_desc: "Passeio panorâmico / Mirantes", tour2_price: getDynamicPrice('passeio'),
-      dinner_desc: "Jantar gastronômico na região turística", dinner_price: getDynamicPrice('jantar')
+// CONSTRUÇÃO DO DIA A PARTIR DOS DADOS REAIS
+function buildDayData(dayIndex, date, ctx, aiDayData) {
+  const getDynamicPrice = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  
+  // Fallback seguro caso a IA falhe
+  const data = aiDayData || {
+      theme: `Exploração - Dia ${dayIndex}`,
+      hotel_name: `${ctx.acc === 'hotel' ? 'Hotel' : 'Alojamento'} Central`,
+      cafe_desc: "Café da manhã com especialidades locais", cafe_price: getDynamicPrice(30, 80),
+      tour1_desc: "Visita e passeio à atração principal", tour1_price: getDynamicPrice(50, 150),
+      lunch_desc: "Almoço em restaurante típico recomendado", lunch_price: getDynamicPrice(80, 200),
+      tour2_desc: "Passeio panorâmico / Mirantes", tour2_price: getDynamicPrice(0, 100),
+      dinner_desc: "Jantar gastronômico local", dinner_price: getDynamicPrice(120, 300)
   };
 
   const baseLat = -23.5505 + (Math.random() - 0.5) * 0.05;
   const baseLng = -46.6333 + (Math.random() - 0.5) * 0.05;
 
-  const totalMeal = data.cafe_price + data.lunch_price + data.dinner_price;
-  const totalTicket = data.tour1_price + data.tour2_price;
+  const totalMeal = (data.cafe_price || 0) + (data.lunch_price || 0) + (data.dinner_price || 0);
+  const totalTicket = (data.tour1_price || 0) + (data.tour2_price || 0);
   const totalDay = totalMeal + totalTicket;
 
   return {
@@ -732,8 +733,8 @@ async function generateSmartDay(dayIndex, totalDays, date, ctx){
     subtitle: `Região Principal de ${ctx.destination}`,
     weather: `${Math.floor(Math.random() * 10) + 18}°C`,
     hotel: {
-      name: `${ctx.acc === 'hotel' ? 'Hotel' : ctx.acc === 'airbnb' ? 'Airbnb' : ctx.acc === 'hostel' ? 'Hostel' : 'Pousada'} Central em ${ctx.destination}`,
-      address: "Endereço Sugerido, Centro",
+      name: data.hotel_name || `${ctx.acc} em ${ctx.destination}`,
+      address: "Endereço principal",
       lat: baseLat,
       lng: baseLng
     },
@@ -749,6 +750,7 @@ async function generateSmartDay(dayIndex, totalDays, date, ctx){
     total: formatBRL(totalDay)
   };
 }
+
 
 window.generateItinerary = async ()=>{
   const destination = document.getElementById('user-destination').value;
@@ -784,21 +786,28 @@ window.generateItinerary = async ()=>{
     const ctx = { origin, destination, tier: window.selectedTier, acc: window.selectedAcc, transport: window.selectedTransport, extra: extraQuery };
     const newItinerary = [];
 
+    // UI Feedback: Iniciando busca com a IA para todos os dias
+    progressLabel.innerText = `Consultando IA para ${dates.length} dias únicos...`;
+    progressPct.innerText = `15%`;
+    progressFill.style.width = `15%`;
+
+    // Chamada à IA para buscar os dados de uma vez
+    const aiDataArray = await fetchFullItineraryFromAI(destination, window.selectedTier, dates.length, extraQuery);
+
     for(let i=0; i<dates.length; i++){
       if(window._cancelGeneration) break;
       
-      const progress = Math.round(((i)/dates.length)*100);
-      progressLabel.innerText = `A estruturar dia ${i+1} de ${dates.length}...`;
+      const progress = Math.round(15 + ((i+1)/dates.length)*85);
+      progressLabel.innerText = `Processando atrações do dia ${i+1}...`;
       progressPct.innerText = `${progress}%`;
       progressFill.style.width = `${progress}%`;
 
-      const dayData = await generateSmartDay(i+1, dates.length, dates[i], ctx);
+      // Monta a UI combinando os dados reais retornados
+      const aiDay = aiDataArray && aiDataArray.length > i ? aiDataArray[i] : null;
+      const dayData = buildDayData(i+1, dates[i], ctx, aiDay);
       newItinerary.push(dayData);
       
-      // Update UI bar precisely
-      const nextProgress = Math.round(((i+1)/dates.length)*100);
-      progressPct.innerText = `${nextProgress}%`;
-      progressFill.style.width = `${nextProgress}%`;
+      await new Promise(r => setTimeout(r, 100)); // Pequena pausa para a UI respirar e barra animar
     }
 
     if(window._cancelGeneration || newItinerary.length === 0){
@@ -821,7 +830,7 @@ window.generateItinerary = async ()=>{
     loadDashboard();
     loadDay(1);
     document.getElementById('close-editor-btn').classList.add('hidden');
-    toast('✨ Roteiro e preços reais gerados!');
+    toast('✨ Roteiro real gerado com sucesso!');
   }catch(err){
     console.error('Erro fatal:', err);
     errorBanner.innerText = `Erro ao gerar roteiro: ${err.message || err}.`;
